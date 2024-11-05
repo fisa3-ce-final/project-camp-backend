@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +22,18 @@ import java.time.LocalDateTime;
 @ToString
 @Table(name = "order_item")
 public class OrderItem {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "order_item_id_seq",
+            sequenceName = "order_item_id_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "order_item_id_seq"
+    )
+    @Column(name = "id", updatable = false)
     private Long id;
 
     @Column(nullable = false)
@@ -35,7 +46,6 @@ public class OrderItem {
     private BigDecimal subtotal;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)

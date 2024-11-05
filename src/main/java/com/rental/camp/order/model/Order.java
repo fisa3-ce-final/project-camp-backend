@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,18 +22,27 @@ import java.time.LocalDateTime;
 @ToString
 @Table(name = "orders")
 public class Order {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(
+            name = "orders_id_seq",
+            sequenceName = "orders_id_seq",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "orders_id_seq"
+    )
+    @Column(name = "id", updatable = false)
     private Long id;
 
-    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'pending'")
+    @Column(name = "order_status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'pending'")
     private String orderStatus;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
