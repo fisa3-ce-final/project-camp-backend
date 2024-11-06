@@ -1,9 +1,10 @@
 package com.rental.camp.rental.service;
 
-import com.rental.camp.rental.dto.RentalItemRequestDto;
-import com.rental.camp.rental.dto.RentalItemResponseDto;
+import com.rental.camp.rental.dto.RentalItemDetailResponse;
+import com.rental.camp.rental.dto.RentalItemRequest;
+import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.RentalItem;
-import com.rental.camp.rental.repository.RentalItemRepository;
+import com.rental.camp.rental.repository.RentalItemRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,13 +13,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class RentalItemService {
-    private final RentalItemRepository rentalItemRepository;
+    private final RentalItemRepositoryImpl rentalItemRepository;
 
-    public Page<RentalItemResponseDto> getRentalItems(RentalItemRequestDto requestDto) {
+    public Page<RentalItemResponse> getRentalItems(RentalItemRequest requestDto) {
         Page<RentalItem> rentalItems = rentalItemRepository.findAvailableItems(PageRequest.of(requestDto.getPage(), requestDto.getSize()));
 
         return rentalItems.map(item -> {
-            RentalItemResponseDto responseDto = new RentalItemResponseDto();
+            RentalItemResponse responseDto = new RentalItemResponse();
 
             responseDto.setId(item.getId());
             responseDto.setName(item.getName());
@@ -29,5 +30,9 @@ public class RentalItemService {
 
             return responseDto;
         });
+    }
+
+    public RentalItemDetailResponse getRentalItem(Long id) {
+        return rentalItemRepository.findItemDetailById(id);
     }
 }
