@@ -1,6 +1,7 @@
 services:
     postgres:
         image: 'postgres:16.4'
+        user: 'test'
         environment:
             - 'POSTGRES_DB=test'
             - 'POSTGRES_PASSWORD=test'
