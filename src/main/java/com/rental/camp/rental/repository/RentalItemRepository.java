@@ -10,10 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
-public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
+public class RentalItemRepository implements RentalItemRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
@@ -28,10 +29,11 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .fetch();
 
         // 전체 데이터 개수
-        long total = jpaQueryFactory.selectFrom(rentalItem)
+        long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
+                .from(rentalItem)
                 .where(rentalItem.status.eq("available")
                         .and(rentalItem.isDeleted.isFalse()))
-                .fetchCount();
+                .fetchOne()).orElse(0L); // null일 경우 0으로 처리
 
         // PageImpl로 페이징된 결과 반환
         return new PageImpl<>(items, pageable, total);

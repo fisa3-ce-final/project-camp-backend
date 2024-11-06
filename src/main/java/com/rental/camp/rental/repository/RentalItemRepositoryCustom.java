@@ -1,4 +1,9 @@
 package com.rental.camp.rental.repository;
 
-public class RentalItemRepositoryCustom {
+import com.rental.camp.rental.model.RentalItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface RentalItemRepositoryCustom {
+    Page<RentalItem> findAvailableItems(Pageable pageable);
 }
