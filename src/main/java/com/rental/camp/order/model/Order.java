@@ -46,7 +46,7 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @Column(nullable = false, length = 50)
     private String rentalStatus;

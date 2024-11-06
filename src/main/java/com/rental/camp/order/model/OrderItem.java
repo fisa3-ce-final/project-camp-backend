@@ -49,7 +49,7 @@ public class OrderItem {
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @Column(name = "order_id", nullable = false)
     private Long orderId;

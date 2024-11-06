@@ -36,13 +36,13 @@ public class CartItem {
     private Long id;
 
     @Column(nullable = false)
-    private Integer quantity;
+    private Integer quantity = 1;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
