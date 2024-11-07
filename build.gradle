@@ -42,16 +42,10 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // OAuth2 클라이언트 - aws cognito
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    //resource server
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
-    //oauth2-jose
-//    implementation 'org.springframework.security:spring-security-oauth2-jose'
-
-    //session
-    implementation 'org.springframework.session:spring-session-data-redis'
-//
-//    //redis
+    //redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     //swagger
