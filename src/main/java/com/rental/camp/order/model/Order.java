@@ -1,12 +1,7 @@
 package com.rental.camp.order.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import com.rental.camp.order.model.type.OrderStatus;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,10 +31,12 @@ public class Order {
     @Column(name = "id", updatable = false)
     private Long id;
 
-    @Column(name = "order_status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'pending'")
-    private String orderStatus;
+    // 기본 값 설정을 제거하여 EnumType.STRING으로 매핑된 Enum 필드로 설정
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false, length = 50)
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = true, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     private LocalDateTime createdAt;
@@ -49,7 +46,7 @@ public class Order {
     private Boolean isDeleted = false;
 
     @Column(nullable = false, length = 50)
-    private String rentalStatus;
+    private String rentalStatus = "returned";
 
     @Column(nullable = false)
     private LocalDateTime rentalDate;
@@ -60,6 +57,7 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "coupon_id", nullable = false)
+    // 쿠폰 ID가 null일 수 있도록 nullable = true로 설정
+    @Column(name = "coupon_id", nullable = true)
     private Long couponId;
 }

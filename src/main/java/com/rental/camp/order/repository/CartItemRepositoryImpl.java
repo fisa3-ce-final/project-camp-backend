@@ -8,6 +8,7 @@ import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.QRentalItem;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static com.rental.camp.order.model.QCartItem.cartItem;
@@ -26,6 +27,18 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 .fetchFirst() != null;
     }
 
+    @Override
+    public List<BigDecimal> findRentalItemPricesByCartItemIds(List<Long> cartItemIds) {
+        QCartItem cartItem = QCartItem.cartItem;
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        return queryFactory.select(rentalItem.price)
+                .from(cartItem)
+                .join(rentalItem).on(cartItem.rentalItemId.eq(rentalItem.id)) // rentalItemId를 기준으로 조인
+                .where(cartItem.id.in(cartItemIds))
+                .fetch();
+    }
+    
     @Override
     public List<CartItemDto> findCartItemsWithRentalInfoByUserId(Long userId) {
         return queryFactory

@@ -1,5 +1,6 @@
 package com.rental.camp.order.dto;
 
+import com.rental.camp.coupon.dto.CouponDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,4 +15,5 @@ import java.util.List;
 public class CartItemListResponse {
     private Long userId;
     private List<CartItemDto> cartItems;
+    private List<CouponDto> coupons;
 }
