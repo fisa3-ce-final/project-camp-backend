@@ -42,7 +42,7 @@ public class Coupon {
     @Column(nullable = false)
     private Integer amount;
 
-    @Column(nullable = false, precision = 3, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal discount;
 
     @Column(nullable = false, length = 50)
