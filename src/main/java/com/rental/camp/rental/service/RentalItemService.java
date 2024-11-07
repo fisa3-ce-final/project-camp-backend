@@ -7,6 +7,7 @@ import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
 import com.rental.camp.rental.model.type.RentalItemCategory;
+import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.repository.RentalItemImageRepository;
 import com.rental.camp.rental.repository.RentalItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,15 @@ public class RentalItemService {
     private final RentalItemImageRepository rentalItemImageRepository;
 
     public Page<RentalItemResponse> getRentalItems(RentalItemCategory category, RentalItemRequest requestDto) {
-        Page<RentalItem> rentalItems = rentalItemRepository.findAvailableItemsByType(category, PageRequest.of(requestDto.getPage(), requestDto.getSize()));
+        Page<RentalItem> rentalItems;
+
+        if (category == RentalItemCategory.ALL) {
+            // 모든 카테고리의 아이템을 조회
+            rentalItems = rentalItemRepository.findAll(PageRequest.of(requestDto.getPage(), requestDto.getSize()));
+        } else {
+            // 특정 카테고리의 아이템을 조회
+            rentalItems = rentalItemRepository.findAvailableItemsByType(category, PageRequest.of(requestDto.getPage(), requestDto.getSize()));
+        }
 
         return rentalItems.map(item -> {
             RentalItemResponse responseDto = new RentalItemResponse();
@@ -52,7 +61,7 @@ public class RentalItemService {
                 .price(request.getPrice())
                 .stock(request.getStock())
                 .category(request.getCategory())
-                .status("available")
+                .status(String.valueOf(RentalItemStatus.AVAILABLE))
                 .viewCount(0)
                 .ratingAvg(BigDecimal.ZERO)
                 .build();

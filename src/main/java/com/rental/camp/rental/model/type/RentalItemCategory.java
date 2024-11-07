@@ -1,6 +1,7 @@
 package com.rental.camp.rental.model.type;
 
 public enum RentalItemCategory {
+    ALL,
     TENT,                   // 텐트
     STORAGE,                // 배낭 및 수납 용품
     COOKING,                // 취사 도구
