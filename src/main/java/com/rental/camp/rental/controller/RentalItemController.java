@@ -4,6 +4,7 @@ import com.rental.camp.rental.dto.RentalItemCreateRequest;
 import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.dto.RentalItemRequest;
 import com.rental.camp.rental.dto.RentalItemResponse;
+import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.service.RentalItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,9 +16,18 @@ import org.springframework.web.bind.annotation.*;
 public class RentalItemController {
     private final RentalItemService rentalItemService;
 
-    @GetMapping
-    public Page<RentalItemResponse> getRentalItems(@RequestBody RentalItemRequest requestDto) {
-        return rentalItemService.getRentalItems(requestDto);
+    @GetMapping("/category/{type}")
+    public Page<RentalItemResponse> getRentalItems(@PathVariable String type,
+                                                   @RequestBody RentalItemRequest requestDto) {
+        RentalItemCategory rentalItemCategory;
+
+        try {
+            rentalItemCategory = RentalItemCategory.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(type + "은 유효하지 않은 카테고리입니다.");
+        }
+
+        return rentalItemService.getRentalItems(rentalItemCategory, requestDto);
     }
 
     @GetMapping("/{id}")

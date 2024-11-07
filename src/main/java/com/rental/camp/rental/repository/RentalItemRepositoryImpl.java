@@ -6,6 +6,8 @@ import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.model.QRentalItem;
 import com.rental.camp.rental.model.QRentalItemImage;
 import com.rental.camp.rental.model.RentalItem;
+import com.rental.camp.rental.model.type.RentalItemCategory;
+import com.rental.camp.rental.model.type.RentalItemStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -22,11 +24,12 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Page<RentalItem> findAvailableItems(Pageable pageable) {
+    public Page<RentalItem> findAvailableItemsByType(RentalItemCategory category, Pageable pageable) {
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
         List<RentalItem> items = jpaQueryFactory.selectFrom(rentalItem)
-                .where(rentalItem.status.eq("available")
+                .where(rentalItem.status.eq(String.valueOf(RentalItemStatus.AVAILABLE))
+                        .and(rentalItem.category.eq(category.toString()))
                         .and(rentalItem.isDeleted.isFalse()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -35,7 +38,8 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         // 전체 데이터 개수
         long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
                 .from(rentalItem)
-                .where(rentalItem.status.eq("available")
+                .where(rentalItem.status.eq(String.valueOf(RentalItemStatus.AVAILABLE))
+                        .and(rentalItem.category.eq(category.toString()))
                         .and(rentalItem.isDeleted.isFalse()))
                 .fetchOne()).orElse(0L); // null일 경우 0으로 처리
 
