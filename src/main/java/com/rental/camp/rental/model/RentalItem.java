@@ -1,12 +1,6 @@
 package com.rental.camp.rental.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -71,4 +65,11 @@ public class RentalItem {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.isDeleted == null) {
+            this.isDeleted = false;
+        }
+    }
 }

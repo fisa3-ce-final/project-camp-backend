@@ -8,6 +8,8 @@ import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.service.RentalItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -36,13 +38,13 @@ public class RentalItemController {
     }
 
     @PostMapping
-    public String createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest) {
+    public ResponseEntity<String> createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest) {
         try {
             rentalItemService.createRentalItem(rentalItemCreateRequest);
-            return "대여글 등록 성공";
+            return ResponseEntity.status(HttpStatus.CREATED).body("대여글 등록 성공");
         } catch (Exception e) {
             e.printStackTrace();
-            return "대여글 등록 실패";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대여글 등록 실패");
         }
     }
 }

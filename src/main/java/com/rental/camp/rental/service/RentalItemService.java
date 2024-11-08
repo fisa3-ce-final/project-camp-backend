@@ -64,13 +64,14 @@ public class RentalItemService {
                 .status(String.valueOf(RentalItemStatus.AVAILABLE))
                 .viewCount(0)
                 .ratingAvg(BigDecimal.ZERO)
+                .userId(1L)
                 .build();
 
         rentalItemRepository.save(rentalItem);
 
         List<RentalItemImage> images = request.getImages().stream()
                 .map(imgDto -> RentalItemImage.builder()
-//                        .imageUrl(imgDto.getImageUrl())
+                        .imageUrl(imgDto.getImageUrl())
                         .imageOrder(imgDto.getImageOrder())
                         .rentalItemId(rentalItem.getId())
                         .build())
