@@ -1,8 +1,8 @@
 package com.rental.camp.order.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.rental.camp.order.dto.OrderConflictDTO;
-import com.rental.camp.order.dto.QOrderConflictDTO;
+import com.rental.camp.order.dto.OrderConflict;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
 import com.rental.camp.rental.model.QRentalItem;
@@ -24,26 +24,25 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
     // findConflictingOrdersWithItemNames 메서드
     @Override
-    public List<OrderConflictDTO> findConflictingOrdersWithItemNames(Long rentalItemId, LocalDateTime rentalDate, LocalDateTime returnDate) {
+    public List<OrderConflict> findConflictingOrdersWithItemNames(List<Long> rentalItemIds, LocalDateTime rentalDate, LocalDateTime returnDate) {
         QOrder order = QOrder.order;
         QOrderItem orderItem = QOrderItem.orderItem;
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
-        return queryFactory.select(
-                        new QOrderConflictDTO(
-                                rentalItem.name,    // RentalItem의 이름
-                                order.returnDate    // Order의 반납 날짜
-                        ))
+        return queryFactory
+                .select(Projections.constructor(OrderConflict.class,
+                        rentalItem.name,
+                        order.returnDate))
                 .from(order)
-                .join(orderItem).on(order.id.eq(orderItem.orderId)) // Order와 OrderItem을 orderId로 조인
-                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id)) // OrderItem과 RentalItem을 rentalItemId로 조인
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
                 .where(
-                        rentalItem.id.eq(rentalItemId)
-                                .and(order.returnDate.after(rentalDate))
-                                .and(order.rentalDate.before(returnDate))
+                        rentalItem.id.in(rentalItemIds)
+                                .and(order.rentalDate.lt(returnDate))
+                                .and(order.returnDate.gt(rentalDate))
                 )
                 .fetch();
     }
-    
+
 }
 

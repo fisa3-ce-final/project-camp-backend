@@ -1,11 +1,11 @@
 package com.rental.camp.order.repository;
 
-import com.rental.camp.order.dto.OrderConflictDTO;
+import com.rental.camp.order.dto.OrderConflict;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OrderRepositoryCustom {
-    
-    List<OrderConflictDTO> findConflictingOrdersWithItemNames(Long rentalItemId, LocalDateTime rentalDate, LocalDateTime returnDate);
+
+    List<OrderConflict> findConflictingOrdersWithItemNames(List<Long> rentalItemIds, LocalDateTime rentalDate, LocalDateTime returnDate);
 }

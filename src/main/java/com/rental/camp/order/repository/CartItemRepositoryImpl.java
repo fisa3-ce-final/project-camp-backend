@@ -2,7 +2,7 @@ package com.rental.camp.order.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.rental.camp.order.dto.CartItemDto;
+import com.rental.camp.order.dto.CartItem;
 import com.rental.camp.order.model.QCartItem;
 import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.QRentalItem;
@@ -38,11 +38,11 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 .where(cartItem.id.in(cartItemIds))
                 .fetch();
     }
-    
+
     @Override
-    public List<CartItemDto> findCartItemsWithRentalInfoByUserId(Long userId) {
+    public List<CartItem> findCartItemsWithRentalInfoByUserId(Long userId) {
         return queryFactory
-                .select(Projections.fields(CartItemDto.class,
+                .select(Projections.fields(CartItem.class,
                         QCartItem.cartItem.id.as("cartItemId"),
                         QCartItem.cartItem.quantity,
                         Projections.fields(RentalItemResponse.class,

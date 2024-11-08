@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CouponDto {
+public class Coupon {
     private Long couponId;
     private String name;
     private BigDecimal discount;

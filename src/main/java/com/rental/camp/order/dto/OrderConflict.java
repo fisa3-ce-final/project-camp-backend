@@ -2,16 +2,18 @@ package com.rental.camp.order.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-public class OrderConflictDTO {
+@NoArgsConstructor
+public class OrderConflict {
     private String rentalItemName;
     private LocalDateTime conflictReturnDate;
 
     @QueryProjection
-    public OrderConflictDTO(String rentalItemName, LocalDateTime conflictReturnDate) {
+    public OrderConflict(String rentalItemName, LocalDateTime conflictReturnDate) {
         this.rentalItemName = rentalItemName;
         this.conflictReturnDate = conflictReturnDate;
     }

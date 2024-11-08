@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderErrorResponseDTO {
+public class OrderErrorResponse {
     private String message;  // 실패 메시지
-    private List<OrderConflictDTO> conflicts;  // 충돌 항목 목록
+    private List<OrderConflict> conflicts;  // 충돌 항목 목록
 }

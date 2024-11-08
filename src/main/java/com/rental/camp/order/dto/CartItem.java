@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 
-public class CartItemDto {
+public class CartItem {
     private Long cartItemId;
     private Integer quantity;
     private RentalItemResponse rentalItem; // RentalItemResponseDto로 변경

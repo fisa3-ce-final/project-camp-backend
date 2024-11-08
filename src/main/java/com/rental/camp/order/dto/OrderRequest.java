@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderRequestDTO {
+public class OrderRequest {
     private Long userId;
     private List<Long> cartItemIds;
     private LocalDateTime rentalDate;

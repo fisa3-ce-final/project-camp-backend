@@ -1,7 +1,7 @@
 package com.rental.camp.order.controller;
 
-import com.rental.camp.order.dto.OrderRequestDTO;
-import com.rental.camp.order.dto.OrderResponseDTO;
+import com.rental.camp.order.dto.OrderRequest;
+import com.rental.camp.order.dto.OrderResponse;
 import com.rental.camp.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,10 +19,10 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderRequestDTO requestDTO) {
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest requestDTO) {
         try {
             // OrderService를 사용하여 주문 생성
-            OrderResponseDTO responseDTO = orderService.createOrder(requestDTO);
+            OrderResponse responseDTO = orderService.createOrder(requestDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
         } catch (RuntimeException e) {
             // 예외 발생 시, 오류 메시지를 포함하여 409 Conflict 상태 코드 반환

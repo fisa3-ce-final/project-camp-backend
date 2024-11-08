@@ -1,6 +1,6 @@
 package com.rental.camp.order.repository;
 
-import com.rental.camp.order.dto.CartItemDto;
+import com.rental.camp.order.dto.CartItem;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -10,5 +10,5 @@ public interface CartItemRepositoryCustom {
 
     List<BigDecimal> findRentalItemPricesByCartItemIds(List<Long> cartItemIds);
 
-    List<CartItemDto> findCartItemsWithRentalInfoByUserId(Long userId);
+    List<CartItem> findCartItemsWithRentalInfoByUserId(Long userId);
 }
