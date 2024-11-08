@@ -73,10 +73,27 @@ public class CommunityPostController {
 
     @GetMapping("/free")
     public ResponseEntity<PageResponseDto> getFreePosts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
 
         PageResponseDto response = postService.getFreePosts(page, size);
         return ResponseEntity.ok(response);
     }
+
+
+    @GetMapping("/review")
+    public ResponseEntity<PageResponseDto> getReviewPosts(
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+        PageResponseDto response = postService.getReviewPosts(page, size);
+        return ResponseEntity.ok(response);
+    }
+
+
+    //게시글 검색
+    @GetMapping("/search/{searchParam}")
+    public List<CommunityPostResponseDto> searchPosts(@PathVariable("searchParam") String searchParam) {
+        return postService.searchPosts(searchParam);
+    }
+
 }

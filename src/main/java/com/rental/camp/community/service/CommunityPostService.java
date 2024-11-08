@@ -4,6 +4,7 @@ import com.rental.camp.community.dto.CommunityPostRequestDto;
 import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.AccessDeniedException;
@@ -19,5 +20,6 @@ public interface CommunityPostService {
     PageResponseDto getFreePosts(int page, int size);
     List<String> retrieveImagePaths(Long postId);
     boolean toggleLike(Long postId, Long userId);
-
+    PageResponseDto getReviewPosts(int page, int size);
+    List<CommunityPostResponseDto> searchPosts(String searchParam);
 }

@@ -269,5 +269,28 @@ public class CommunityPostServiceImpl implements CommunityPostService {
             communityLikeRepository.save(new CommunityLike(postId, userId));
             return true; // 좋아요 추가 상태 반환
         }
+
+
+    }
+    @Override
+    public PageResponseDto getReviewPosts(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<CommunityPost> postPage = postRepository.findByCategoryAndIsDeletedFalse(CommunityPostCategory.REVIEW, pageRequest);
+
+        List<CommunityPostResponseDto> posts = postPage.getContent().stream()
+                .map(post -> {
+                    List<String> imagePaths = retrieveImagePaths(post.getId()); // 이미지 경로 불러오기
+                    return new CommunityPostResponseDto(post, imagePaths); // CommunityPostResponseDto로 매핑
+                })
+                .collect(Collectors.toList());
+
+        return new PageResponseDto(posts, postPage); // PageResponseDto 객체로 반환
+    }
+
+
+
+    @Override
+    public List<CommunityPostResponseDto> searchPosts(String searchParam) {
+        return postRepository.searchPosts(searchParam);
     }
 }
