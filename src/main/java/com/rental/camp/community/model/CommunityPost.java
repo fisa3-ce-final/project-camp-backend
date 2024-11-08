@@ -1,7 +1,10 @@
 package com.rental.camp.community.model;
 
+import com.rental.camp.community.model.type.CommunityPostCategory;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,8 +39,9 @@ public class CommunityPost {
     @Column(name = "id", updatable = false)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String category;
+    private CommunityPostCategory category;
 
     @Column(nullable = false, length = 255)
     private String title;

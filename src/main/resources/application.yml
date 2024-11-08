@@ -25,6 +25,8 @@ spring:
                 order_updates: true
         database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+
+
     docker:
         compose:
             enabled: true
@@ -50,6 +52,7 @@ management:
         prometheus:
             enabled: true
         show-details: always
+
 
 cloud:
     aws:
