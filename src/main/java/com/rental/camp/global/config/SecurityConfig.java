@@ -41,8 +41,10 @@ public class SecurityConfig {
                     oauth2.jwt(jwt -> {
                         jwt.jwtAuthenticationConverter(jwtAuthConverter);
                     });
-                });
+                })
+                .addFilterBefore(new CustomJwtAuthenticationFilter(),
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
-
 }
