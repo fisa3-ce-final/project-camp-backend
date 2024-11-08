@@ -4,7 +4,6 @@ import com.rental.camp.community.dto.CommunityPostRequestDto;
 import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
-import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.AccessDeniedException;
@@ -16,7 +15,7 @@ public interface CommunityPostService {
     String saveImageFile(MultipartFile file) throws Exception;
     CommunityPostResponseDto updatePost(Long postId, CommunityPostUpdateRequestDto updateRequestDto, List<MultipartFile> newImages) throws Exception;
     void softDeletePost(Long postId, Long userId) throws AccessDeniedException;
-    CommunityPostResponseDto getPostDetail(Long id);
+    CommunityPostResponseDto getPostDetail(Long id, int page, int size);
     PageResponseDto getFreePosts(int page, int size);
     List<String> retrieveImagePaths(Long postId);
     boolean toggleLike(Long postId, Long userId);

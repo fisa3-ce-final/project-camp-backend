@@ -3,7 +3,7 @@ package com.rental.camp.community.service;
 import com.rental.camp.community.dto.CommentRequestDto;
 import com.rental.camp.community.dto.CommentResponseDto;
 import com.rental.camp.community.model.Comment;
-import com.rental.camp.community.repository.CommentRepositoryCustom;
+import com.rental.camp.community.repository.CommentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -15,9 +15,10 @@ import java.util.NoSuchElementException;
 @Service
 public class CommentServiceImpl implements CommentService {
 
-    private final CommentRepositoryCustom commentRepository;
+    private final CommentRepository commentRepository;
 
-    public CommentServiceImpl(CommentRepositoryCustom commentRepository) {
+
+    public CommentServiceImpl(CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
     }
 

@@ -1,6 +1,5 @@
 package com.rental.camp.community.repository;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.community.model.Comment;
 import com.rental.camp.community.model.QComment;
@@ -50,15 +49,5 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(comments, pageable, total);
-    }
-
-    @Override
-    public Comment save(Comment commentEntity) {
-        if (commentEntity.getId() == null) {
-            entityManager.persist(commentEntity);
-        } else {
-            commentEntity = entityManager.merge(commentEntity);
-        }
-        return commentEntity;
     }
 }

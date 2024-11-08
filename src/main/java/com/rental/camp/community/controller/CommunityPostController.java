@@ -5,7 +5,7 @@ import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
 import com.rental.camp.community.service.CommunityPostService;
-import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +30,12 @@ public class CommunityPostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CommunityPostResponseDto> getPostDetail(@PathVariable("id") Long id) {
-        CommunityPostResponseDto postDetail = postService.getPostDetail(id);
+    public ResponseEntity<CommunityPostResponseDto> getPostDetail(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        CommunityPostResponseDto postDetail = postService.getPostDetail(id, page, size);
         return ResponseEntity.ok(postDetail);
     }
 

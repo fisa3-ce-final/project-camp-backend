@@ -17,7 +17,7 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    //댓글 작성
+    // 댓글 작성
     @PostMapping("/{postId}/comments")
     public ResponseEntity<CommentResponseDto> addComment(
             @PathVariable("postId") Long postId,
@@ -26,7 +26,7 @@ public class CommentController {
         return ResponseEntity.ok(response);
     }
 
-    //댓글 삭제
+    // 댓글 삭제
     @DeleteMapping("/{postId}/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable("postId") Long postId,
@@ -35,7 +35,7 @@ public class CommentController {
         return ResponseEntity.noContent().build();
     }
 
-    //댓글 조회
+    // 댓글 조회
     @GetMapping("/{postId}/comments")
     public ResponseEntity<Page<CommentResponseDto>> getCommentsByPostId(
             @PathVariable("postId") Long postId,
