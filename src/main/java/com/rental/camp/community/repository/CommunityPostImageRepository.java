@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommunityPostImageRepository extends JpaRepository<CommunityPostImage, Long> {
+
     List<CommunityPostImage> findByCommunityPostId(Long communityPostId);
     Optional<CommunityPostImage> findByImagePath(String imagePath);
     int countByCommunityPostId(Long communityPostId);

@@ -17,7 +17,6 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
 
-
     public CommentServiceImpl(CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
     }
@@ -50,7 +49,6 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findCustomCommentByCommunityPostIdAndId(postId, commentId)
                 .orElseThrow(() -> new NoSuchElementException("Comment not found with postId: " + postId + " and commentId: " + commentId));
 
-        // Soft delete 방식
         comment.setIsDeleted(true);
         commentRepository.save(comment);
     }

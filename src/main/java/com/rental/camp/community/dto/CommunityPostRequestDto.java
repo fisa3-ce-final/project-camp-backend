@@ -10,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class CommunityPostRequestDto {
+
     private Long userId;
     private String title;
     private String content;

@@ -5,7 +5,6 @@ import com.rental.camp.community.dto.CommunityPostRequestDto;
 import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
-import com.rental.camp.community.model.Comment;
 import com.rental.camp.community.model.CommunityLike;
 import com.rental.camp.community.model.CommunityPost;
 import com.rental.camp.community.model.CommunityPostImage;
@@ -39,14 +38,14 @@ public class CommunityPostServiceImpl implements CommunityPostService {
 
     private final CommunityPostRepository postRepository;
     private final CommunityPostImageRepository imageRepository;
-    private final CommunityLikeRepository likeRepository; // 변경: 필드명을 likeRepository로 수정
+    private final CommunityLikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final CommentService commentService;
 
     public CommunityPostServiceImpl(
             CommunityPostRepository postRepository,
             CommunityPostImageRepository imageRepository,
-            CommunityLikeRepository likeRepository, // 변경: 생성자 파라미터도 likeRepository로 수정
+            CommunityLikeRepository likeRepository,
             CommentRepository commentRepository,
             CommentService commentService) {
 
@@ -59,7 +58,15 @@ public class CommunityPostServiceImpl implements CommunityPostService {
 
     @Transactional
     public CommunityPostResponseDto createPost(CommunityPostRequestDto requestDto) throws Exception {
-        // CommunityPost 엔티티에 기본 정보 저장
+        CommunityPost post = initializeCommunityPost(requestDto);
+        CommunityPost savedPost = postRepository.save(post);
+
+        List<String> imagePaths = saveImages(requestDto.getImages(), savedPost.getId());
+
+        return new CommunityPostResponseDto(savedPost, imagePaths, new ArrayList<>());
+    }
+
+    private CommunityPost initializeCommunityPost(CommunityPostRequestDto requestDto) {
         CommunityPost post = new CommunityPost();
         post.setUserId(requestDto.getUserId());
         post.setTitle(requestDto.getTitle());
@@ -71,36 +78,31 @@ public class CommunityPostServiceImpl implements CommunityPostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
 
-        // 후기 글인 경우, rating 값 설정
         if ("REVIEW".equals(requestDto.getCategory()) && requestDto.getRating() != null) {
             post.setRating(requestDto.getRating());
         }
+        return post;
+    }
 
-        // CommunityPost 엔티티 저장
-        CommunityPost savedPost = postRepository.save(post);
-
-        // 이미지 파일 저장 및 이미지 경로 리스트 생성
+    private List<String> saveImages(List<MultipartFile> images, Long postId) throws Exception {
         List<String> imagePaths = new ArrayList<>();
-        List<MultipartFile> images = requestDto.getImages();
-        if (images != null && !images.isEmpty()) {
-            for (int i = 0; i < images.size(); i++) {
-                String imagePath = saveImageFile(images.get(i));
-                imagePaths.add(imagePath);
+        if (images == null || images.isEmpty()) return imagePaths;
 
-                CommunityPostImage postImage = new CommunityPostImage();
-                postImage.setCommunityPostId(savedPost.getId());
-                postImage.setImagePath(imagePath);
-                postImage.setImageOrder(i + 1);
-                postImage.setIsDeleted(false);
-                postImage.setCreatedAt(LocalDateTime.now());
-                postImage.setUpdatedAt(LocalDateTime.now());
+        for (int i = 0; i < images.size(); i++) {
+            String imagePath = saveImageFile(images.get(i));
+            imagePaths.add(imagePath);
 
-                imageRepository.save(postImage);
-            }
+            CommunityPostImage postImage = new CommunityPostImage();
+            postImage.setCommunityPostId(postId);
+            postImage.setImagePath(imagePath);
+            postImage.setImageOrder(i + 1);
+            postImage.setIsDeleted(false);
+            postImage.setCreatedAt(LocalDateTime.now());
+            postImage.setUpdatedAt(LocalDateTime.now());
+
+            imageRepository.save(postImage);
         }
-
-        // 응답 DTO 생성 및 반환
-        return new CommunityPostResponseDto(savedPost, imagePaths, new ArrayList<>());
+        return imagePaths;
     }
 
     public String saveImageFile(MultipartFile file) throws Exception {
@@ -119,112 +121,89 @@ public class CommunityPostServiceImpl implements CommunityPostService {
 
     @Transactional
     public CommunityPostResponseDto updatePost(Long postId, CommunityPostUpdateRequestDto updateRequestDto, List<MultipartFile> newImages) throws Exception {
-        CommunityPost post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+        CommunityPost post = validateOwnership(postId, updateRequestDto.getUserId());
+        updatePostDetails(post, updateRequestDto);
 
-        // 사용자가 작성자인지 확인
-        if (!post.getUserId().equals(updateRequestDto.getUserId())) {
-            throw new RuntimeException("수정 권한이 없습니다.");
-        }
-
-        // 제목 및 내용 업데이트
-        if (updateRequestDto.getTitle() != null) {
-            post.setTitle(updateRequestDto.getTitle());
-        }
-        if (updateRequestDto.getContent() != null) {
-            post.setContent(updateRequestDto.getContent());
-        }
-        post.setUpdatedAt(LocalDateTime.now());
-
-        // 기존 이미지 삭제
-        List<String> imagesToDelete = updateRequestDto.getImagesToDelete();
-        if (imagesToDelete != null && !imagesToDelete.isEmpty()) {
-            for (String imagePath : imagesToDelete) {
-                Optional<CommunityPostImage> optionalImage = imageRepository.findByImagePath(imagePath);
-                if (optionalImage.isPresent()) {
-                    CommunityPostImage image = optionalImage.get();
-                    imageRepository.delete(image);
-                    try {
-                        Files.deleteIfExists(Paths.get("uploads/images/" + imagePath));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        // 새 이미지 추가
-        int existingImageCount = imageRepository.countByCommunityPostId(postId);
-        List<String> newImagePaths = new ArrayList<>();
-        if (newImages != null && !newImages.isEmpty()) {
-            for (int i = 0; i < newImages.size(); i++) {
-                String newPath = saveImageFile(newImages.get(i));
-
-                CommunityPostImage newImage = new CommunityPostImage();
-                newImage.setCommunityPostId(postId);
-                newImage.setImagePath(newPath);
-                newImage.setImageOrder(existingImageCount + i + 1);
-                newImage.setCreatedAt(LocalDateTime.now());
-                newImage.setUpdatedAt(LocalDateTime.now());
-                newImage.setIsDeleted(false);
-
-                imageRepository.save(newImage);
-                newImagePaths.add(newPath);
-            }
-        }
+        deleteImages(updateRequestDto.getImagesToDelete());
+        List<String> newImagePaths = saveImages(newImages, postId);
 
         return new CommunityPostResponseDto(post, newImagePaths, new ArrayList<>());
     }
 
-    @Transactional
-    public void softDeletePost(Long postId, Long userId) throws AccessDeniedException {
+    private CommunityPost validateOwnership(Long postId, Long userId) {
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-
-        // 사용자 검증: 작성자 또는 관리자만 삭제 가능
         if (!post.getUserId().equals(userId)) {
-            throw new AccessDeniedException("삭제 권한이 없습니다.");
+            throw new RuntimeException("수정 권한이 없습니다.");
         }
+        return post;
+    }
 
+    private void updatePostDetails(CommunityPost post, CommunityPostUpdateRequestDto updateRequestDto) {
+        if (updateRequestDto.getTitle() != null) post.setTitle(updateRequestDto.getTitle());
+        if (updateRequestDto.getContent() != null) post.setContent(updateRequestDto.getContent());
+        post.setUpdatedAt(LocalDateTime.now());
+    }
+
+    private void deleteImages(List<String> imagesToDelete) {
+        if (imagesToDelete == null || imagesToDelete.isEmpty()) return;
+        imagesToDelete.forEach(this::deleteImage);
+    }
+
+    private void deleteImage(String imagePath) {
+        imageRepository.findByImagePath(imagePath).ifPresent(image -> {
+            imageRepository.delete(image);
+            try {
+                Files.deleteIfExists(Paths.get("uploads/images/" + imagePath));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Transactional
+    public void softDeletePost(Long postId, Long userId) throws AccessDeniedException {
+        CommunityPost post = validateOwnership(postId, userId);
         post.setIsDeleted(true);
         postRepository.save(post);
 
-        List<CommunityPostImage> images = imageRepository.findByCommunityPostIdAndIsDeletedFalse(postId);
-        for (CommunityPostImage image : images) {
-            image.setIsDeleted(true);
-            imageRepository.save(image);
-        }
+        imageRepository.findByCommunityPostIdAndIsDeletedFalse(postId)
+                .forEach(image -> {
+                    image.setIsDeleted(true);
+                    imageRepository.save(image);
+                });
 
-        List<Comment> comments = commentRepository.findCustomCommentsByCommunityPostIdAndIsDeletedFalse(postId, PageRequest.of(0, Integer.MAX_VALUE)).getContent();
-        for (Comment comment : comments) {
-            comment.setIsDeleted(true);
-            commentRepository.save(comment);
-        }
+        commentRepository.findCustomCommentsByCommunityPostIdAndIsDeletedFalse(postId, PageRequest.of(0, Integer.MAX_VALUE))
+                .forEach(comment -> {
+                    comment.setIsDeleted(true);
+                    commentRepository.save(comment);
+                });
     }
 
     public CommunityPostResponseDto getPostDetail(Long id, int page, int size) {
         CommunityPost post = postRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
 
-        List<String> imagePaths = imageRepository.findByCommunityPostIdAndIsDeletedFalse(id).stream()
-                .map(CommunityPostImage::getImagePath)
-                .collect(Collectors.toList());
-
+        List<String> imagePaths = retrieveImagePaths(id);
         Page<CommentResponseDto> commentPage = commentService.getCommentsByPostId(id, page, size);
-        List<CommentResponseDto> comments = commentPage.getContent();
-
-        return new CommunityPostResponseDto(post, imagePaths, comments);
+        return new CommunityPostResponseDto(post, imagePaths, commentPage.getContent());
     }
 
     public PageResponseDto getFreePosts(int page, int size) {
+        return getPostsByCategory(CommunityPostCategory.FREE, page, size);
+    }
+
+    @Override
+    public PageResponseDto getReviewPosts(int page, int size) {
+        return getPostsByCategory(CommunityPostCategory.REVIEW, page, size);
+    }
+
+    private PageResponseDto getPostsByCategory(CommunityPostCategory category, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<CommunityPost> postPage = postRepository.findByCategoryAndIsDeletedFalse(CommunityPostCategory.FREE, pageRequest);
+        Page<CommunityPost> postPage = postRepository.findByCategoryAndIsDeletedFalse(category, pageRequest);
 
         List<CommunityPostResponseDto> posts = postPage.getContent().stream()
-                .map(post -> {
-                    List<String> imagePaths = retrieveImagePaths(post.getId());
-                    return new CommunityPostResponseDto(post, imagePaths, new ArrayList<>());
-                })
+                .map(post -> new CommunityPostResponseDto(post, retrieveImagePaths(post.getId()), new ArrayList<>()))
                 .collect(Collectors.toList());
 
         return new PageResponseDto(posts, postPage);
@@ -245,7 +224,9 @@ public class CommunityPostServiceImpl implements CommunityPostService {
         Optional<CommunityLike> existingLike = likeRepository.findByPostIdAndUserId(postId, userId);
 
         if (existingLike.isPresent()) {
-            post.setLikes(post.getLikes() - 1);
+            if (post.getLikes() > 0) {
+                post.setLikes(post.getLikes() - 1);
+            }
             likeRepository.deleteByPostIdAndUserId(postId, userId);
             return false;
         } else {
@@ -253,21 +234,6 @@ public class CommunityPostServiceImpl implements CommunityPostService {
             likeRepository.save(new CommunityLike(postId, userId));
             return true;
         }
-    }
-
-    @Override
-    public PageResponseDto getReviewPosts(int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<CommunityPost> postPage = postRepository.findByCategoryAndIsDeletedFalse(CommunityPostCategory.REVIEW, pageRequest);
-
-        List<CommunityPostResponseDto> posts = postPage.getContent().stream()
-                .map(post -> {
-                    List<String> imagePaths = retrieveImagePaths(post.getId());
-                    return new CommunityPostResponseDto(post, imagePaths, new ArrayList<>());
-                })
-                .collect(Collectors.toList());
-
-        return new PageResponseDto(posts, postPage);
     }
 
     @Override

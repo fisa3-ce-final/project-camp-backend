@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommunityPostResponseDto {
+
     private Long id;
     private String title;
     private String content;

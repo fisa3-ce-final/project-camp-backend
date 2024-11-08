@@ -3,7 +3,6 @@ package com.rental.camp.community.repository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.community.model.Comment;
 import com.rental.camp.community.model.QComment;
-import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -16,12 +15,10 @@ import java.util.Optional;
 public class CommentRepositoryImpl implements CommentRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    private final EntityManager entityManager; // EntityManager 추가
     private final QComment comment = QComment.comment; // QComment 객체 사용
 
-    public CommentRepositoryImpl(JPAQueryFactory queryFactory, EntityManager entityManager) {
+    public CommentRepositoryImpl(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
-        this.entityManager = entityManager; // EntityManager 초기화
     }
 
     @Override
