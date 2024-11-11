@@ -9,6 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 public class CommunityPostUpdateRequestDto {
+
     private Long userId; // 수정 요청을 보낸 사용자 ID
     private String title; // 수정할 제목
     private String content; // 수정할 내용

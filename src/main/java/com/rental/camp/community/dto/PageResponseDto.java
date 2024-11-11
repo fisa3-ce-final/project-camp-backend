@@ -9,7 +9,8 @@ import java.util.List;
 @Getter
 @Setter
 public class PageResponseDto {
-    private List<CommunityPostResponseDto> content;;
+
+    private List<CommunityPostResponseDto> content;
     private int totalPages;
     private long totalElements;
     private int numberOfElements;

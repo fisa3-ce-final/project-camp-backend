@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommunityPostRepositoryCustom {
+
     Page<CommunityPost> findByCategoryAndIsDeletedFalse(CommunityPostCategory category, Pageable pageable);
     Optional<CommunityPost> findByIdAndIsDeletedFalse(Long id);
     Page<CommunityPostResponseDto> findReviewPosts(Pageable pageable);

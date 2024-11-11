@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface CommentRepositoryCustom {
+
     Optional<Comment> findCustomCommentByCommunityPostIdAndId(Long communityPostId, Long id);
     Page<Comment> findCustomCommentsByCommunityPostIdAndIsDeletedFalse(Long communityPostId, Pageable pageable);
-    Comment save(Comment comment); // save 메서드 추가
 }

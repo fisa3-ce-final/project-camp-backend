@@ -1,6 +1,5 @@
 package com.rental.camp.community.dto;
 
-//import com.rental.camp.community.model.Comment;
 import com.rental.camp.community.model.CommunityPost;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommunityPostResponseDto {
+
     private Long id;
     private String title;
     private String content;
@@ -26,8 +26,9 @@ public class CommunityPostResponseDto {
     private Integer likes;
     private BigDecimal rating; // 후기 글에만 존재하는 필드
     private List<String> imagePaths; // 이미지 경로 목록 필드 추가
+    private List<CommentResponseDto> comments = new ArrayList<>();
 
-    public CommunityPostResponseDto(CommunityPost post, List<String> imagePaths) {
+    public CommunityPostResponseDto(CommunityPost post, List<String> imagePaths, List<CommentResponseDto> comments) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
@@ -38,5 +39,6 @@ public class CommunityPostResponseDto {
         this.likes = post.getLikes();
         this.rating = post.getRating(); // 후기 게시글일 경우 값이 존재
         this.imagePaths = imagePaths;   // 이미지 경로 설정
+        this.comments = comments;
     }
 }
