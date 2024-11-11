@@ -1,4 +1,3 @@
-// CartItemController.java
 package com.rental.camp.order.controller;
 
 import com.rental.camp.order.dto.CartItemListResponse;
@@ -26,5 +25,11 @@ public class CartItemController {
     public ResponseEntity<CartItemListResponse> getCartItems(@RequestParam(name = "userId") Long userId) {
         CartItemListResponse responseDto = cartItemService.getCartItemsByUserId(userId);
         return ResponseEntity.ok(responseDto);
+    }
+
+    // 예외 처리 메서드 추가
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }

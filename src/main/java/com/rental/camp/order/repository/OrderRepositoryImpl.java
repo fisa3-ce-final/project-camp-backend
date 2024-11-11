@@ -1,10 +1,12 @@
 package com.rental.camp.order.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.dto.OrderConflict;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
+import com.rental.camp.order.model.type.OrderStatus;
 import com.rental.camp.rental.model.QRentalItem;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
@@ -42,6 +44,30 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                                 .and(order.returnDate.gt(rentalDate))
                 )
                 .fetch();
+    }
+
+    public void updateOrderStatus(Long userId, Long cartItemId, OrderStatus status) {
+        QOrder order = QOrder.order;
+        QOrderItem orderItem = QOrderItem.orderItem;
+
+        // OrderItem 테이블과 조인하여 해당 cartItemId를 가진 주문을 찾아 상태 업데이트
+        queryFactory
+                .update(order)
+                .set(order.orderStatus, status)
+                .where(
+                        order.userId.eq(userId)
+                                .and(
+                                        JPAExpressions
+                                                .selectOne()
+                                                .from(orderItem)
+                                                .where(
+                                                        orderItem.orderId.eq(order.id)
+                                                                .and(orderItem.id.eq(cartItemId))
+                                                )
+                                                .exists()
+                                )
+                )
+                .execute();
     }
 
 }

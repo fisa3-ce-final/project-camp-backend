@@ -17,4 +17,7 @@ public class OrderConflict {
         this.rentalItemName = rentalItemName;
         this.conflictReturnDate = conflictReturnDate;
     }
+
+    public OrderConflict(String msg, String s) {
+    }
 }

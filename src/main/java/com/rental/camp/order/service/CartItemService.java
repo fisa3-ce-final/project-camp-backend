@@ -2,7 +2,6 @@ package com.rental.camp.order.service;
 
 import com.rental.camp.coupon.dto.Coupon;
 import com.rental.camp.coupon.repository.CouponRepository;
-import com.rental.camp.order.dto.CartItem;
 import com.rental.camp.order.dto.CartItemListResponse;
 import com.rental.camp.order.dto.CartItemRequest;
 import com.rental.camp.order.dto.CartItemResponse;
@@ -27,7 +26,7 @@ public class CartItemService {
         cartItemRepository.save(cartItem);
 
         CartItemResponse responseDto = new CartItemResponse();
-        responseDto.setUserId(requestDto.getUserId());
+        responseDto.setId(requestDto.getUserId());
         return responseDto;
     }
 
@@ -37,15 +36,14 @@ public class CartItemService {
 
     public CartItemListResponse getCartItemsByUserId(Long userId) {
         // 장바구니 아이템 조회
-        List<CartItem> cartItems = cartItemRepository.findCartItemsWithRentalInfoByUserId(userId);
-
+        List<CartItemResponse> cartItems = cartItemRepository.findCartItemsWithRentalInfoByUserId(userId);
         // 유저 보유 쿠폰 조회
         List<Coupon> coupons = couponRepository.findCouponsByUserId(userId);
 
-        CartItemListResponse responseDto = new CartItemListResponse();
-        responseDto.setUserId(userId);
-        responseDto.setCartItems(cartItems);
-        responseDto.setCoupons(coupons);
-        return responseDto;
+        return CartItemListResponse.builder()
+                .userId(userId)
+                .cartItems(cartItems)
+                .coupons(coupons)
+                .build();
     }
 }
