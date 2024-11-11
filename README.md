@@ -1,6 +1,6 @@
 <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; color: #333;">
 
-<h1 style="color: #333; font-size: 2em;">📌 렌탈 서비스 백엔드 프로젝트</h1>
+<h1 style="color: #333; font-size: 2em;">📌 렌탈 서비스 백엔드 프로젝트 📌</h1>
 <p>이 백엔드 프로젝트는 렌탈 서비스 플랫폼을 지원하기 위해 설계되었으며, 사용자 관리, 대여 아이템 관리, 주문 처리 및 커뮤니티 상호작용 등의 다양한 기능을 제공합니다.</p>
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">⚙️ 프로젝트 설정</h2>

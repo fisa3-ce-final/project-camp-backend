@@ -1,16 +1,13 @@
 package com.rental.camp.coupon.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
+import com.rental.camp.coupon.model.type.CouponType;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,16 +39,19 @@ public class Coupon {
     @Column(nullable = false)
     private Integer amount;
 
-    @Column(nullable = false, precision = 3, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal discount;
 
     @Column(nullable = false, length = 50)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private CouponType type;
 
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
