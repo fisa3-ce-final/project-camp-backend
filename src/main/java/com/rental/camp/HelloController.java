@@ -18,7 +18,7 @@ public class HelloController {
 
     @GetMapping("/")
     public String rooturl() {
-        return "wow ";
+        return "index ";
     }
 
 }
