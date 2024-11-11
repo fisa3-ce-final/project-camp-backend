@@ -8,7 +8,9 @@ import java.util.List;
 
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long>, CartItemRepositoryCustom {
-    List<CartItem> findByUserId(Long userId);
+    boolean existsByUserIdAndRentalItemId(Long userId, Long rentalItemId);
 
+
+    void deleteAllByUserIdAndRentalItemIdIn(Long userId, List<Long> rentalItemIds);
 
 }

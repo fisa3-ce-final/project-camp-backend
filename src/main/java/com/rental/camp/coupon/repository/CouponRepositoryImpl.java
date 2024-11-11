@@ -25,14 +25,22 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
 
         return queryFactory
                 .select(Projections.constructor(Coupon.class,
-                        coupon.id.as("couponId"),
+                        coupon.id,
                         coupon.name,
                         coupon.discount,
                         coupon.type,
                         coupon.expiryDate))
                 .from(coupon)
-                .where(coupon.isDeleted.eq(false)
-                        .and(coupon.expiryDate.after(LocalDateTime.now())))
+                .innerJoin(userCoupon)
+                .on(
+                        coupon.id.eq(userCoupon.couponId)
+                                .and(userCoupon.userId.eq(userId))
+                                .and(userCoupon.isUsed.eq(false))
+                )
+                .where(
+                        coupon.isDeleted.eq(false)
+                                .and(coupon.expiryDate.after(LocalDateTime.now()))
+                )
                 .fetch();
     }
 }
