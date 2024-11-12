@@ -1,6 +1,5 @@
 package com.rental.camp.user.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,38 +36,25 @@ public class User {
             strategy = GenerationType.SEQUENCE,
             generator = "users_id_seq"
     )
-    @Column(name = "id", updatable = false)
     private Long id;
 
-    @Column(nullable = false)
     private UUID uuid;
 
-    @Column(nullable = false, length = 255)
     private String username;
 
-    @Column(nullable = false, length = 255)
-    private String password;
-
-    @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(nullable = false, length = 20)
     private String phone;
 
-    @Column(nullable = false)
     private String address;
 
-    @Column(nullable = false, length = 255)
     private String nickname;
 
-    @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
     private String provider;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    @Column(nullable = false)
     private Boolean isDeleted;
 }
