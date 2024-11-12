@@ -22,6 +22,7 @@ import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.repository.RentalItemRepository;
 import com.rental.camp.user.model.QUser;
 import com.rental.camp.user.model.User;
+import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,7 @@ public class OrderService {
     private final JPAQueryFactory queryFactory;
     private final UserCouponRepository userCouponRepository;
     private final RentalItemRepository rentalItemRepository;
+    private final UserRepository userRepository;
 
 
     @Transactional
@@ -417,6 +419,92 @@ public class OrderService {
         }
 
         return conflicts;
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderDetails(Long orderId, Long userId) {
+        QOrder qOrder = QOrder.order;
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+        QRentalItem qRentalItem = QRentalItem.rentalItem;
+        QUser qUser = QUser.user;
+
+        // 1. 주문 조회
+        Order order = queryFactory
+                .selectFrom(qOrder)
+                .where(
+                        qOrder.id.eq(orderId)
+                                .and(qOrder.userId.eq(userId))
+                )
+                .fetchOne();
+
+        if (order == null) {
+            throw new RuntimeException("주문을 찾을 수 없습니다.");
+        }
+
+        // 2. 주문 아이템 정보 조회 및 totalItemPrice 계산
+        List<OrderItemInfo> orderItems = queryFactory
+                .select(Projections.constructor(OrderItemInfo.class,
+                        qOrderItem.rentalItemId,
+                        qRentalItem.name.as("itemName"),
+                        qOrderItem.quantity,
+                        qOrderItem.price,
+                        qOrderItem.subtotal))
+                .from(qOrderItem)
+                .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
+                .where(qOrderItem.orderId.eq(orderId))
+                .fetch();
+
+        if (orderItems.isEmpty()) {
+            throw new RuntimeException("주문 아이템을 찾을 수 없습니다.");
+        }
+
+        // 3. totalItemPrice 계산
+        BigDecimal totalItemPrice = orderItems.stream()
+                .map(OrderItemInfo::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // finalPrice는 order의 totalAmount
+        BigDecimal finalPrice = order.getTotalAmount();
+
+        // 4. discountAmount 계산
+        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
+        BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
+
+        // 5. rentalDays 계산
+        long rentalDays = ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate());
+        if (rentalDays <= 0) {
+            rentalDays = 1;
+        }
+
+        // 6. User 정보 조회
+        User user = queryFactory
+                .selectFrom(qUser)
+                .where(qUser.id.eq(userId))
+                .fetchOne();
+
+        if (user == null) {
+            throw new RuntimeException("User를 찾을 수 없습니다: " + userId);
+        }
+
+        // 7. 주문 생성 날짜 포맷
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedCreatedAt = order.getCreatedAt().format(formatter);
+
+        // 8. 응답 객체 생성 및 반환
+        return new OrderResponse(
+                userId,
+                String.format("주문 조회가 완료되었습니다. 주문 상태: %s", order.getOrderStatus()),
+                orderId,
+                user.getUsername(),
+                user.getAddress(),
+                user.getPhone(),
+                orderItems,
+                rentalDays,
+                totalItemPrice,
+                finalDiscountAmount,
+                finalPrice,
+                formattedCreatedAt
+        );
     }
 
 }

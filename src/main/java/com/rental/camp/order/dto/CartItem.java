@@ -12,6 +12,11 @@ import lombok.NoArgsConstructor;
 public class CartItem {
     private Long id; // 기존 cartItemId를 id로 변경
     private Long userId;
+
+    public CartItem(Long id) {
+        this.id = id;
+    }
+
     private Long rentalItemId;
     private Integer quantity;
     private RentalItemResponse rentalItem;
@@ -37,5 +42,5 @@ public class CartItem {
         this.quantity = quantity;
         this.rentalItem = rentalItem;
     }
-    
+
 }

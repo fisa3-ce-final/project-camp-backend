@@ -4,6 +4,9 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.dto.OrderConflict;
+import com.rental.camp.order.dto.OrderDetails;
+import com.rental.camp.order.dto.OrderItemInfo;
+import com.rental.camp.order.model.Order;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
 import com.rental.camp.order.model.type.OrderStatus;
@@ -69,6 +72,42 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 )
                 .execute();
     }
+    
+    @Override
+    public OrderDetails findOrderWithDetailsByOrderIdAndUserId(Long orderId, Long userId) {
+        QOrder qOrder = QOrder.order;
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+        QRentalItem qRentalItem = QRentalItem.rentalItem;
+
+        // Order 조회
+        Order order = queryFactory
+                .selectFrom(qOrder)
+                .where(
+                        qOrder.id.eq(orderId),
+                        qOrder.userId.eq(userId)
+                )
+                .fetchOne();
+
+        if (order == null) {
+            throw new RuntimeException("주문을 찾을 수 없습니다: orderId=" + orderId);
+        }
+
+        // OrderItems 조회
+        List<OrderItemInfo> orderItems = queryFactory
+                .select(Projections.constructor(OrderItemInfo.class,
+                        qOrderItem.rentalItemId,
+                        qRentalItem.name.as("itemName"),
+                        qOrderItem.quantity,
+                        qOrderItem.price,
+                        qOrderItem.subtotal))
+                .from(qOrderItem)
+                .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
+                .where(qOrderItem.orderId.eq(orderId))
+                .fetch();
+
+        return new OrderDetails(order, orderItems);
+    }
+
 
 }
 
