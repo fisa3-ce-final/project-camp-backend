@@ -16,4 +16,7 @@ public class OrderRequest {
     private LocalDateTime rentalDate;
     private LocalDateTime returnDate;
     private Long userCouponId;  // 쿠폰 ID는 선택적 필드
+
+    public OrderRequest(Long userId) {
+    }
 }

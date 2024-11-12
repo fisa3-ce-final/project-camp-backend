@@ -1,10 +1,8 @@
 package com.rental.camp.order.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rental.camp.coupon.dto.Coupon;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
@@ -12,8 +10,10 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CartItemListResponse {
     private Long userId;
-    private List<CartItem> cartItems;
+    private List<CartItemResponse> cartItems;
     private List<Coupon> coupons;
 }

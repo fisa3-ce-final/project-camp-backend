@@ -6,19 +6,16 @@ import com.rental.camp.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/reserve")
+@RequestMapping("/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping
+    @PostMapping("/reserve")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest requestDTO) {
         try {
             // OrderService를 사용하여 주문 생성
@@ -27,6 +24,27 @@ public class OrderController {
         } catch (RuntimeException e) {
             // 예외 발생 시, 오류 메시지를 포함하여 409 Conflict 상태 코드 반환
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/complete")
+    public ResponseEntity<OrderResponse> completeOrder(@RequestBody OrderRequest request) {
+        OrderResponse response = orderService.completeOrder(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> getOrderDetails(
+            @PathVariable(name = "orderId") Long orderId,
+            @RequestParam(name = "userId") Long userId) {  // name 속성 추가
+
+
+        try {
+            OrderRequest request = new OrderRequest(userId);
+            OrderResponse response = orderService.getOrderDetails(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }
