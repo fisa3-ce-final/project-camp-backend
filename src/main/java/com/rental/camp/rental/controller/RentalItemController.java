@@ -60,4 +60,10 @@ public class RentalItemController {
         String uuid = principal.getName();
         return rentalItemService.getMyItems(uuid, pageRequest);
     }
+
+    @GetMapping("/my-orders")
+    public Page<MyOrdersResponse> getMyOrders(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        return rentalItemService.getMyOrders(uuid, pageRequest);
+    }
 }

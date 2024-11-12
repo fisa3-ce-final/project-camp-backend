@@ -93,4 +93,10 @@ public class RentalItemService {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         return rentalItemRepository.findItemsByUserId(userId, PageRequest.of(pageRequest.getPage(), pageRequest.getSize()));
     }
+
+    // 마이페이지에서 내 주문 내역 조회
+    public Page<MyOrdersResponse> getMyOrders(String uuid, MyPageRequest pageRequest) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        return rentalItemRepository.findOrdersByUserId(userId, PageRequest.of(pageRequest.getPage(), pageRequest.getSize()));
+    }
 }

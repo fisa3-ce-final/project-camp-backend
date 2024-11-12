@@ -5,6 +5,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
 import com.rental.camp.rental.dto.MyItemsResponse;
+import com.rental.camp.rental.dto.MyOrdersResponse;
 import com.rental.camp.rental.dto.MyRentalItemsResponse;
 import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.model.QRentalItem;
@@ -96,8 +97,6 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         itemDetail.setImage(itemDetailImages);
 
-        // TODO: 상품 리뷰 매핑
-
         return itemDetail;
     }
 
@@ -158,5 +157,35 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .fetchOne()).orElse(0L);
 
         return new PageImpl<>(myItems, pageable, total);
+    }
+
+    @Override
+    public Page<MyOrdersResponse> findOrdersByUserId(Long userId, Pageable pageable) {
+        QOrder order = QOrder.order;
+        QOrderItem orderItem = QOrderItem.orderItem;
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        List<MyOrdersResponse> myOrders = jpaQueryFactory.select(Projections.constructor(
+                    MyOrdersResponse.class,
+                    rentalItem.name,
+                    rentalItem.category,
+                    orderItem.quantity,
+                    order.orderStatus.stringValue(),
+                    order.createdAt
+                ))
+                .from(order)
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
+                .where(order.userId.eq(userId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = Optional.ofNullable(jpaQueryFactory.select(order.count())
+                .from(order)
+                .where(order.userId.eq(userId))
+                .fetchOne()).orElse(0L);
+
+        return new PageImpl<>(myOrders, pageable, total);
     }
 }
