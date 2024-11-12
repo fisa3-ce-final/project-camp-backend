@@ -49,9 +49,15 @@ public class RentalItemController {
         }
     }
 
-    @GetMapping("/my-rental-Items")
+    @GetMapping("/my-rental-items")
     public Page<MyRentalItemsResponse> getMyRentalItems(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         return rentalItemService.getMyRentalItems(uuid, pageRequest);
+    }
+
+    @GetMapping("/my-items")
+    public Page<MyItemsResponse> getMyItems(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        return rentalItemService.getMyItems(uuid, pageRequest);
     }
 }

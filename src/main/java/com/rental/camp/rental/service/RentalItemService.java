@@ -85,6 +85,12 @@ public class RentalItemService {
     // 마이페이지에서 내 대여 기록 조회
     public Page<MyRentalItemsResponse> getMyRentalItems(String uuid, MyPageRequest request) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
-        return rentalItemRepository.findByRentalItemsUserId(userId, PageRequest.of(request.getPage(), request.getSize()));
+        return rentalItemRepository.findRentalItemsByUserId(userId, PageRequest.of(request.getPage(), request.getSize()));
+    }
+
+    // 마이페이지에서 내가 빌려준 물품 목록 조회
+    public Page<MyItemsResponse> getMyItems(String uuid, MyPageRequest pageRequest) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        return rentalItemRepository.findItemsByUserId(userId, PageRequest.of(pageRequest.getPage(), pageRequest.getSize()));
     }
 }
