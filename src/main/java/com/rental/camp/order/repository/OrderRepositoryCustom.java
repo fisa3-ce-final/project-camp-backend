@@ -1,6 +1,7 @@
 package com.rental.camp.order.repository;
 
 import com.rental.camp.order.dto.OrderConflict;
+import com.rental.camp.order.dto.OrderDetails;
 import com.rental.camp.order.model.type.OrderStatus;
 
 import java.time.LocalDateTime;
@@ -11,4 +12,6 @@ public interface OrderRepositoryCustom {
     public void updateOrderStatus(Long userId, Long cartItemId, OrderStatus status);
 
     List<OrderConflict> findConflictingOrdersWithItemNames(List<Long> rentalItemIds, LocalDateTime rentalDate, LocalDateTime returnDate);
+
+    OrderDetails findOrderWithDetailsByOrderIdAndUserId(Long orderId, Long userId);
 }

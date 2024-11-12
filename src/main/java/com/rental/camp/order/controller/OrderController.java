@@ -32,4 +32,19 @@ public class OrderController {
         OrderResponse response = orderService.completeOrder(request);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> getOrderDetails(
+            @PathVariable(name = "orderId") Long orderId,
+            @RequestParam(name = "userId") Long userId) {  // name 속성 추가
+
+
+        try {
+            OrderRequest request = new OrderRequest(userId);
+            OrderResponse response = orderService.getOrderDetails(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

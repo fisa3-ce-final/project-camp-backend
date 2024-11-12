@@ -27,6 +27,41 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 .fetchFirst() != null;
     }
 
+    public CartItemResponse findCartItemWithRentalInfo(Long cartItemId, Long userId) {
+        return queryFactory
+                .select(Projections.constructor(CartItemResponse.class,
+                        QCartItem.cartItem.id,
+                        QCartItem.cartItem.quantity,
+                        Projections.constructor(RentalItemResponse.class,
+                                QRentalItem.rentalItem.id,
+                                QRentalItem.rentalItem.name,
+                                QRentalItem.rentalItem.price,
+                                QRentalItem.rentalItem.stock,
+                                QRentalItem.rentalItem.category,
+                                QRentalItem.rentalItem.status
+                        )
+                ))
+                .from(QCartItem.cartItem)
+                .join(QRentalItem.rentalItem).on(QCartItem.cartItem.rentalItemId.eq(QRentalItem.rentalItem.id))
+                .where(
+                        QCartItem.cartItem.id.eq(cartItemId),
+                        QCartItem.cartItem.userId.eq(userId)
+                )
+                .fetchOne();
+    }
+
+    @Override
+    public long updateCartItemQuantity(Long cartItemId, Long userId, Integer quantity) {
+        return queryFactory
+                .update(QCartItem.cartItem)
+                .set(QCartItem.cartItem.quantity, quantity)
+                .where(
+                        QCartItem.cartItem.id.eq(cartItemId),
+                        QCartItem.cartItem.userId.eq(userId)
+                )
+                .execute();
+    }
+
 //    @Override
 //    public List<BigDecimal> findRentalItemPricesByCartItemIds(List<Long> cartItemIds) {
 //        QCartItem cartItem = QCartItem.cartItem;
@@ -38,6 +73,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 //                .where(cartItem.id.in(cartItemIds))
 //                .fetch();
 //    }
+
 
     @Override
     public List<CartItemResponse> findCartItemsWithRentalInfoByUserId(Long userId) {

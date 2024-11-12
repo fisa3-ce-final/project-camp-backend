@@ -13,6 +13,10 @@ public interface CartItemRepositoryCustom {
 
     List<CartItemResponse> findCartItemsWithRentalInfoByUserId(Long userId);
 
+    public long updateCartItemQuantity(Long cartItemId, Long userId, Integer quantity);
+
+    public CartItemResponse findCartItemWithRentalInfo(Long cartItemId, Long userId);
+
     List<CartItem> findAllByIdAndUserId(List<Long> cartItemIds, Long userId);
 
 }
