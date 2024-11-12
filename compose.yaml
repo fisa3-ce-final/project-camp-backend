@@ -1,4 +1,24 @@
+version: '3.8'
+
 services:
+    app:
+        image: my-backend-image:latest
+        container_name: backend_app
+        ports:
+            - "8080:8080"
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/test
+            SPRING_DATASOURCE_USERNAME: test
+            SPRING_DATASOURCE_PASSWORD: test
+            SPRING_REDIS_HOST: redis
+            SPRING_REDIS_PORT: 6379
+            AWS_COGNITO_JWK_SET_URI: ${AWS_COGNITO_JWK_SET_URI}
+            AWS_COGNITO_ISSUER_URI: ${AWS_COGNITO_ISSUER_URI}
+            SPRING_PROFILES_ACTIVE: dev
+        depends_on:
+            - postgres
+            - redis
+
     postgres:
         image: 'postgres:16.4'
         environment:
@@ -15,8 +35,7 @@ services:
         ports:
             - "6379:6379"
         volumes:
-            - redis_data:/data # 데이터 지속성을 위한 볼륨
-
+            - redis_data:/data  # 데이터 지속성을 위한 볼륨
 
 volumes:
     postgres-data:
