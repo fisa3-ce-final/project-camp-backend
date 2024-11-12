@@ -35,7 +35,7 @@ public class CustomJwtAuthenticationFilter extends OncePerRequestFilter {
                     Instant.now(), // 발행 시간
                     Instant.MAX, // 매우 먼 미래로 만료 시간 설정
                     Map.of("alg", "none"), // 헤더
-                    Map.of("sub", "guest",
+                    Map.of("sub", "44e8ad6c-90d1-70f6-9d38-c0354ec6b499",
                             "name", "Guest",
                             "email", "test@test.com",
                             "picture", "https://avatars.githubusercontent.com/u/124599?v=4")
