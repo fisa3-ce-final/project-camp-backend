@@ -36,9 +36,12 @@ public class RentalItemController {
     }
 
     @PostMapping
-    public ResponseEntity<String> createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest) {
+    public ResponseEntity<String> createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest,
+                                                   JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+
         try {
-            rentalItemService.createRentalItem(rentalItemCreateRequest);
+            rentalItemService.createRentalItem(uuid, rentalItemCreateRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body("대여글 등록 성공");
         } catch (Exception e) {
             e.printStackTrace();

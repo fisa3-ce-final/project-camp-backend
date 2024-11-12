@@ -54,7 +54,9 @@ public class RentalItemService {
         return rentalItemRepository.findItemDetailById(id);
     }
 
-    public void createRentalItem(RentalItemCreateRequest request) {
+    public void createRentalItem(String uuid, RentalItemCreateRequest request) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+
         RentalItem rentalItem = RentalItem.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -64,7 +66,7 @@ public class RentalItemService {
                 .status(String.valueOf(RentalItemStatus.AVAILABLE))
                 .viewCount(0)
                 .ratingAvg(BigDecimal.ZERO)
-                .userId(1L)
+                .userId(userId)
                 .build();
 
         rentalItemRepository.save(rentalItem);
