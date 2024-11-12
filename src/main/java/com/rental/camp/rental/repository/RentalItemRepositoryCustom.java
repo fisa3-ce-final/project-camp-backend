@@ -1,5 +1,6 @@
 package com.rental.camp.rental.repository;
 
+import com.rental.camp.rental.dto.MyRentalItemsResponse;
 import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemCategory;
@@ -9,4 +10,5 @@ import org.springframework.data.domain.Pageable;
 public interface RentalItemRepositoryCustom {
     Page<RentalItem> findAvailableItemsByType(RentalItemCategory category, Pageable pageable);
     RentalItemDetailResponse findItemDetailById(Long id);
+    Page<MyRentalItemsResponse> findByRentalItemsUserId(Long userId, Pageable pageable);
 }

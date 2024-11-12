@@ -2,6 +2,9 @@ package com.rental.camp.rental.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.rental.camp.order.model.QOrder;
+import com.rental.camp.order.model.QOrderItem;
+import com.rental.camp.rental.dto.MyRentalItemsResponse;
 import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.model.QRentalItem;
 import com.rental.camp.rental.model.QRentalItemImage;
@@ -95,5 +98,38 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         // TODO: 상품 리뷰 매핑
 
         return itemDetail;
+    }
+
+    @Override
+    public Page<MyRentalItemsResponse> findByRentalItemsUserId(Long userId, Pageable pageable) {
+        QOrder order = QOrder.order;
+        QOrderItem orderItem = QOrderItem.orderItem;
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        List<MyRentalItemsResponse> myRentalItems = jpaQueryFactory.select(Projections.constructor(
+                        MyRentalItemsResponse.class,
+                        rentalItem.name,
+                        rentalItem.category,
+                        orderItem.quantity,
+                        order.orderStatus.stringValue(),
+                        order.rentalDate,
+                        order.returnDate
+                ))
+                .from(order)
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
+                .where(order.userId.eq(userId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = Optional.ofNullable(jpaQueryFactory.select(order.count())
+                .from(order)
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
+                .where(order.userId.eq(userId))
+                .fetchOne()).orElse(0L);
+
+        return new PageImpl<>(myRentalItems, pageable, total);
     }
 }

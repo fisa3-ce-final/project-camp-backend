@@ -1,15 +1,13 @@
 package com.rental.camp.rental.service;
 
-import com.rental.camp.rental.dto.RentalItemCreateRequest;
-import com.rental.camp.rental.dto.RentalItemDetailResponse;
-import com.rental.camp.rental.dto.RentalItemRequest;
-import com.rental.camp.rental.dto.RentalItemResponse;
+import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.repository.RentalItemImageRepository;
 import com.rental.camp.rental.repository.RentalItemRepository;
+import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,12 +16,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
 public class RentalItemService {
     private final RentalItemRepository rentalItemRepository;
     private final RentalItemImageRepository rentalItemImageRepository;
+    private final UserRepository userRepository;
 
     public Page<RentalItemResponse> getRentalItems(RentalItemCategory category, RentalItemRequest requestDto) {
         Page<RentalItem> rentalItems;
@@ -78,5 +78,11 @@ public class RentalItemService {
                 .toList();
 
         rentalItemImageRepository.saveAll(images);
+    }
+
+    // 마이페이지에서 내 대여 기록 조회
+    public Page<MyRentalItemsResponse> getMyRentalItems(String uuid, MyPageRequest request) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        return rentalItemRepository.findByRentalItemsUserId(userId, PageRequest.of(request.getPage(), request.getSize()));
     }
 }

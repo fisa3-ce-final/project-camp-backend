@@ -1,15 +1,13 @@
 package com.rental.camp.rental.controller;
 
-import com.rental.camp.rental.dto.RentalItemCreateRequest;
-import com.rental.camp.rental.dto.RentalItemDetailResponse;
-import com.rental.camp.rental.dto.RentalItemRequest;
-import com.rental.camp.rental.dto.RentalItemResponse;
+import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.service.RentalItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -46,5 +44,11 @@ public class RentalItemController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("대여글 등록 실패");
         }
+    }
+
+    @GetMapping("/my-rental-Items")
+    public Page<MyRentalItemsResponse> getMyRentalItems(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        return rentalItemService.getMyRentalItems(uuid, pageRequest);
     }
 }
