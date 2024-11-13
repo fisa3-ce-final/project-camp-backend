@@ -47,4 +47,17 @@ public class OrderController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(
+            @PathVariable(name = "orderId") Long orderId,
+            @RequestParam(name = "userId") Long userId
+    ) {
+        try {
+            OrderResponse response = orderService.cancelOrder(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

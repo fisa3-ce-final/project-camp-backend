@@ -4,7 +4,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.coupon.model.Coupon;
-import com.rental.camp.coupon.model.QUserCoupon;
 import com.rental.camp.coupon.model.UserCoupon;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.coupon.repository.UserCouponRepository;
@@ -28,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -52,12 +52,15 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest requestDTO) {
+        //TO-DO
+
+
         // 대여 기간 중복 여부 확인
-        List<OrderConflict> conflicts = checkForConflicts(requestDTO);
-        if (!conflicts.isEmpty()) {
-            // 중복된 아이템 정보를 포함한 응답 반환
-            return new OrderResponse("예약 불가 - 중복된 대여 기간이 있습니다.", requestDTO.getUserId(), conflicts);
-        }
+//        List<OrderConflict> conflicts = checkForConflicts(requestDTO);
+//        if (!conflicts.isEmpty()) {
+//            // 중복된 아이템 정보를 포함한 응답 반환
+//            return new OrderResponse("예약 불가 - 중복된 대여 기간이 있습니다.", requestDTO.getUserId(), conflicts);
+//        }
 
         // 주문 생성
         Order order = new Order();
@@ -187,7 +190,6 @@ public class OrderService {
         QOrderItem qOrderItem = QOrderItem.orderItem;
         QRentalItem qRentalItem = QRentalItem.rentalItem;
         QUser qUser = QUser.user;
-        QUserCoupon qUserCoupon = QUserCoupon.userCoupon;
 
 
         // 1. 주문 찾기
@@ -339,14 +341,11 @@ public class OrderService {
     }
 
     private BigDecimal applyCouponDiscount(BigDecimal totalAmount, Coupon coupon) {
-        switch (coupon.getType()) {
-            case PERCENTAGE_DISCOUNT:
-                return totalAmount.multiply(BigDecimal.ONE.subtract(coupon.getDiscount()));
-            case FIXED_AMOUNT_DISCOUNT:
-                return totalAmount.subtract(coupon.getDiscount()).max(BigDecimal.ZERO);
-            default:
-                return totalAmount;
-        }
+        return switch (coupon.getType()) {
+            case PERCENTAGE_DISCOUNT -> totalAmount.multiply(BigDecimal.ONE.subtract(coupon.getDiscount()));
+            case FIXED_AMOUNT_DISCOUNT -> totalAmount.subtract(coupon.getDiscount()).max(BigDecimal.ZERO);
+            //  default -> totalAmount;
+        };
     }
 
     @Transactional
@@ -489,7 +488,7 @@ public class OrderService {
         // 7. 주문 생성 날짜 포맷
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String formattedCreatedAt = order.getCreatedAt().format(formatter);
-
+        String updatedAt = String.valueOf(order.getUpdatedAt());
         // 8. 응답 객체 생성 및 반환
         return new OrderResponse(
                 userId,
@@ -503,8 +502,100 @@ public class OrderService {
                 totalItemPrice,
                 finalDiscountAmount,
                 finalPrice,
+                formattedCreatedAt,
+                updatedAt
+        );
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, Long userId) {
+        // 1. 취소 가능한 주문 조회
+        Order order = orderRepository.findCancellableOrder(orderId, userId)
+                .orElseThrow(() -> new RuntimeException("취소할 수 없는 주문입니다. 주문 후 30분이 경과했거나 존재하지 않는 주문입니다."));
+
+        // 2. 주문 상태 CANCELLED로 변경
+        boolean updated = orderRepository.updateOrderStatus(orderId, OrderStatus.CANCELLED);
+        if (!updated) {
+            throw new RuntimeException("주문 취소 실패: 상태 업데이트가 되지 않았습니다.");
+        }
+
+        // 3. 쿠폰 상태 복구
+        restoreUserCoupon(order);
+
+        // 4. 주문 아이템 조회 및 재고 복구
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItems(orderId);
+        restoreRentalItemsStock(orderItems);
+
+        // 5. 응답 데이터 준비
+        return createOrderCancellationResponse(order, orderItems);
+    }
+
+    private void restoreUserCoupon(Order order) {
+        if (order.getCouponId() != null) {
+            UserCoupon userCoupon = userCouponRepository.findByCouponIdAndUserId(order.getCouponId(), order.getUserId())
+                    .orElseThrow(() -> new RuntimeException("사용자의 쿠폰을 찾을 수 없습니다. CouponId: " + order.getCouponId() + ", UserId: " + order.getUserId()));
+
+            userCoupon.setIsUsed(false);
+            userCouponRepository.save(userCoupon);
+        }
+    }
+
+    private void restoreRentalItemsStock(List<OrderItemInfo> orderItems) {
+        for (OrderItemInfo orderItem : orderItems) {
+            RentalItem rentalItem = rentalItemRepository.findById(orderItem.getRentalItemId())
+                    .orElseThrow(() -> new RuntimeException("RentalItem을 찾을 수 없습니다. ID: " + orderItem.getRentalItemId()));
+
+            rentalItem.setStock(rentalItem.getStock() + orderItem.getQuantity());
+            rentalItemRepository.save(rentalItem);
+        }
+    }
+
+    private OrderResponse createOrderCancellationResponse(Order order, List<OrderItemInfo> orderItems) {
+        User user = userRepository.findById(order.getUserId())
+                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + order.getUserId()));
+
+        BigDecimal totalItemPrice = calculateTotalItemPrice(orderItems);
+        BigDecimal finalDiscountAmount = calculateDiscountAmount(totalItemPrice, order.getTotalAmount());
+        long rentalDays = calculateRentalDays(order);
+        String formattedCreatedAt = formatCreatedAt(order.getCreatedAt());
+
+        return new OrderResponse(
+                order.getUserId(),
+                "주문이 취소되었습니다.",
+                order.getId(),
+                user.getUsername(),
+                user.getAddress(),
+                user.getPhone(),
+                orderItems,
+                rentalDays,
+                totalItemPrice,
+                finalDiscountAmount,
+                order.getTotalAmount(),
                 formattedCreatedAt
         );
     }
 
+    private BigDecimal calculateTotalItemPrice(List<OrderItemInfo> orderItems) {
+        return orderItems.stream()
+                .map(OrderItemInfo::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal calculateDiscountAmount(BigDecimal totalItemPrice, BigDecimal finalPrice) {
+        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
+        return discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
+    }
+
+    private long calculateRentalDays(Order order) {
+        long days = ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate());
+        return days <= 0 ? 1 : days;
+    }
+
+    private String formatCreatedAt(LocalDateTime createdAt) {
+        return createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
 }
+
+
+
+

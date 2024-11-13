@@ -1,7 +1,6 @@
 package com.rental.camp.order.repository;
 
 import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.dto.OrderConflict;
 import com.rental.camp.order.dto.OrderDetails;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class OrderRepositoryImpl implements OrderRepositoryCustom {
@@ -26,6 +26,22 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         this.queryFactory = new JPAQueryFactory(entityManager);
     }
 
+    @Override
+    public Optional<Order> findCancellableOrder(Long orderId, Long userId) {
+        QOrder qOrder = QOrder.order;
+
+        LocalDateTime cancellationDeadline = LocalDateTime.now().minusMinutes(30);
+
+        Order order = queryFactory
+                .selectFrom(qOrder)
+                .where(qOrder.id.eq(orderId)
+                        .and(qOrder.userId.eq(userId))
+                        .and(qOrder.orderStatus.eq(OrderStatus.COMPLETED))
+                        .and(qOrder.updatedAt.after(cancellationDeadline)))
+                .fetchOne();
+
+        return Optional.ofNullable(order);
+    }
 
     // findConflictingOrdersWithItemNames 메서드
     @Override
@@ -49,30 +65,62 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 .fetch();
     }
 
-    public void updateOrderStatus(Long userId, Long cartItemId, OrderStatus status) {
-        QOrder order = QOrder.order;
-        QOrderItem orderItem = QOrderItem.orderItem;
+//    public void updateOrderStatus(Long userId, Long cartItemId, OrderStatus status) {
+//        QOrder order = QOrder.order;
+//        QOrderItem orderItem = QOrderItem.orderItem;
+//
+//        // OrderItem 테이블과 조인하여 해당 cartItemId를 가진 주문을 찾아 상태 업데이트
+//        queryFactory
+//                .update(order)
+//                .set(order.orderStatus, status)
+//                .where(
+//                        order.userId.eq(userId)
+//                                .and(
+//                                        JPAExpressions
+//                                                .selectOne()
+//                                                .from(orderItem)
+//                                                .where(
+//                                                        orderItem.orderId.eq(order.id)
+//                                                                .and(orderItem.id.eq(cartItemId))
+//                                                )
+//                                                .exists()
+//                                )
+//                )
+//                .execute();
+//    }
 
-        // OrderItem 테이블과 조인하여 해당 cartItemId를 가진 주문을 찾아 상태 업데이트
-        queryFactory
-                .update(order)
-                .set(order.orderStatus, status)
-                .where(
-                        order.userId.eq(userId)
-                                .and(
-                                        JPAExpressions
-                                                .selectOne()
-                                                .from(orderItem)
-                                                .where(
-                                                        orderItem.orderId.eq(order.id)
-                                                                .and(orderItem.id.eq(cartItemId))
-                                                )
-                                                .exists()
-                                )
-                )
+    @Override
+    public boolean updateOrderStatus(Long orderId, OrderStatus status) {
+        QOrder qOrder = QOrder.order;
+
+        long updatedCount = queryFactory
+                .update(qOrder)
+                .set(qOrder.orderStatus, status)
+                .set(qOrder.updatedAt, LocalDateTime.now())
+                .where(qOrder.id.eq(orderId))
                 .execute();
+
+        return updatedCount > 0;
     }
-    
+
+    @Override
+    public List<OrderItemInfo> findOrderItems(Long orderId) {
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+        QRentalItem qRentalItem = QRentalItem.rentalItem;
+
+        return queryFactory
+                .select(Projections.constructor(OrderItemInfo.class,
+                        qOrderItem.rentalItemId,
+                        qRentalItem.name.as("itemName"),
+                        qOrderItem.quantity,
+                        qOrderItem.price,
+                        qOrderItem.subtotal))
+                .from(qOrderItem)
+                .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
+                .where(qOrderItem.orderId.eq(orderId))
+                .fetch();
+    }
+
     @Override
     public OrderDetails findOrderWithDetailsByOrderIdAndUserId(Long orderId, Long userId) {
         QOrder qOrder = QOrder.order;
