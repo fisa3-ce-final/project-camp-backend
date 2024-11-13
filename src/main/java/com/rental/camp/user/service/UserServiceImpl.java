@@ -4,6 +4,7 @@ import com.rental.camp.global.config.S3Client;
 import com.rental.camp.user.dto.UserGetResponse;
 import com.rental.camp.user.dto.UserModifyRequest;
 import com.rental.camp.user.dto.UserModifyResponse;
+import com.rental.camp.user.dto.UserSigninRequest;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -22,7 +23,8 @@ public class UserServiceImpl implements UserService {
     final S3Client s3Client;
 
     @Override
-    public void signIn(String provider, JwtAuthenticationToken principal) {
+    @Transactional
+    public void signIn(UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         String email = principal.getTokenAttributes().get("email").toString();
         String picture = principal.getTokenAttributes().get("picture").toString();
@@ -35,7 +37,7 @@ public class UserServiceImpl implements UserService {
                     .nickname("닉네임_" + uuid.toString().split("-")[0])
                     .phone("")
                     .address("")
-                    .provider(provider)
+                    .provider(signinRequest.getProvider())
                     .imageUrl(picture)
                     .isDeleted(false)
                     .build();
