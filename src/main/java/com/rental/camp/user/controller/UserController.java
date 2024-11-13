@@ -26,11 +26,11 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> signin(@RequestBody UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
+    public ResponseEntity<String> signin(@RequestBody UserSigninRequest userSigninRequest, JwtAuthenticationToken principal) {
         if (principal == null) {
             return ResponseEntity.badRequest().body("signin failed");
         }
-        userService.signIn(signinRequest, principal);
+        userService.signIn(userSigninRequest, principal);
         return ResponseEntity.ok("signin success: " + principal.getName());
     }
 

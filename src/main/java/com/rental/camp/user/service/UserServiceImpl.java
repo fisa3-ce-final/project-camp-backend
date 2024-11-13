@@ -23,7 +23,6 @@ public class UserServiceImpl implements UserService {
     final S3Client s3Client;
 
     @Override
-    @Transactional
     public void signIn(UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         String email = principal.getTokenAttributes().get("email").toString();
@@ -77,15 +76,12 @@ public class UserServiceImpl implements UserService {
         UUID uuid = UUID.fromString(principal.getName());
         User user = userRepository.findByUuid(uuid);
         if (user != null) {
-            String imageUrl = "";
-            if (userModifyRequest.getImageFile() != null)
-                imageUrl = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
+            String imageUrl = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
 
             user.setPhone(userModifyRequest.getPhone());
             user.setAddress(userModifyRequest.getAddress());
             user.setNickname(userModifyRequest.getNickname());
-            if (!imageUrl.isEmpty())
-                user.setImageUrl(imageUrl);
+            user.setImageUrl(imageUrl);
 
             userRepository.save(user);
 
