@@ -3,7 +3,6 @@ package com.rental.camp.user.controller;
 import com.rental.camp.user.dto.UserGetResponse;
 import com.rental.camp.user.dto.UserModifyRequest;
 import com.rental.camp.user.dto.UserModifyResponse;
-import com.rental.camp.user.dto.UserSigninRequest;
 import com.rental.camp.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +25,11 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> signin(@RequestBody UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
+    public ResponseEntity<String> signin(@RequestBody String provider, JwtAuthenticationToken principal) {
         if (principal == null) {
             return ResponseEntity.badRequest().body("signin failed");
         }
-        userService.signIn(signinRequest, principal);
+        userService.signIn(provider, principal);
         return ResponseEntity.ok("signin success: " + principal.getName());
     }
 
