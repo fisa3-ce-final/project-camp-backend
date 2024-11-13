@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import java.io.IOException;
 
 public interface UserService {
-    void signIn(JwtAuthenticationToken principal);
+    void signIn(String provider, JwtAuthenticationToken principal);
 
     UserGetResponse getUser(String _uuid);
 
