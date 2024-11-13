@@ -26,12 +26,14 @@ public class S3Client {
     private String bucket;
 
     // 이미지 S3에 업로드 후 이미지 URL 반환
-    public String uploadImage(String fullPath, MultipartFile file) throws IOException {
+    public String uploadImage(String path, MultipartFile file) throws IOException {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
+        
+        String fullPath = path + file.getOriginalFilename();
 
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, fullPath + file.getOriginalFilename(), file.getInputStream(), metadata);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, fullPath, file.getInputStream(), metadata);
         putObjectRequest.withCannedAcl(CannedAccessControlList.PublicRead);
         amazonS3.putObject(putObjectRequest);
 

@@ -73,11 +73,13 @@ public class UserServiceImpl implements UserService {
         UUID uuid = UUID.fromString(principal.getName());
         User user = userRepository.findByUuid(uuid);
         if (user != null) {
+            String imageUrl = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
+
             user.setPhone(userModifyRequest.getPhone());
             user.setAddress(userModifyRequest.getAddress());
             user.setNickname(userModifyRequest.getNickname());
-            String imageUrl = s3Client.uploadImage("profile/" + uuid, userModifyRequest.getImageFile());
-
+            user.setImageUrl(imageUrl);
+            
             userRepository.save(user);
 
             return UserModifyResponse.builder()
