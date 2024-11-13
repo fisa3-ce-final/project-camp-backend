@@ -22,10 +22,11 @@ public class UserServiceImpl implements UserService {
     final S3Client s3Client;
 
     @Override
-    public void signIn(JwtAuthenticationToken principal) {
+    public void signIn(String provider, JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         String email = principal.getTokenAttributes().get("email").toString();
         String picture = principal.getTokenAttributes().get("picture").toString();
+
         User exsistingUser = userRepository.findByUuid(uuid);
         if (exsistingUser == null) {
             User newUser = User.builder()
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
                     .nickname("닉네임_" + uuid.toString().split("-")[0])
                     .phone("")
                     .address("")
+                    .provider(provider)
                     .imageUrl(picture)
                     .isDeleted(false)
                     .build();
@@ -79,7 +81,7 @@ public class UserServiceImpl implements UserService {
             user.setAddress(userModifyRequest.getAddress());
             user.setNickname(userModifyRequest.getNickname());
             user.setImageUrl(imageUrl);
-            
+
             userRepository.save(user);
 
             return UserModifyResponse.builder()

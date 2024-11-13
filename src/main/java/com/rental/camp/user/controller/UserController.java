@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,11 +25,11 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> signin(JwtAuthenticationToken principal) {
+    public ResponseEntity<String> signin(@RequestBody String provider, JwtAuthenticationToken principal) {
         if (principal == null) {
             return ResponseEntity.badRequest().body("signin failed");
         }
-        userService.signIn(principal);
+        userService.signIn(provider, principal);
         return ResponseEntity.ok("signin success: " + principal.getName());
     }
 
