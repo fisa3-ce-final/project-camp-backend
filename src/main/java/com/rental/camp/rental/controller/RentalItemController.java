@@ -36,7 +36,7 @@ public class RentalItemController {
     }
 
     @PostMapping
-    public ResponseEntity<String> createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest,
+    public ResponseEntity<String> createRentalItem(@ModelAttribute RentalItemCreateRequest rentalItemCreateRequest,
                                                    JwtAuthenticationToken principal) {
         String uuid = principal.getName();
 

@@ -1,5 +1,7 @@
 package com.rental.camp.rental.dto;
 
+import com.rental.camp.rental.model.type.RentalItemCategory;
+import com.rental.camp.rental.model.type.RentalItemStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,8 +19,8 @@ public class RentalItemDetailResponse {
     private String description;
     private BigDecimal price;
     private Integer stock;
-    private String category;
-    private String status;
+    private RentalItemCategory category;
+    private RentalItemStatus status;
     private Integer viewCount;
     private BigDecimal ratingAvg;
     private LocalDateTime createdAt;

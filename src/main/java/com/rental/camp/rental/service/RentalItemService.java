@@ -1,5 +1,6 @@
 package com.rental.camp.rental.service;
 
+import com.rental.camp.global.config.S3Client;
 import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
@@ -14,9 +15,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
 @Service
@@ -24,6 +27,7 @@ public class RentalItemService {
     private final RentalItemRepository rentalItemRepository;
     private final RentalItemImageRepository rentalItemImageRepository;
     private final UserRepository userRepository;
+    private final S3Client s3Client;
 
     public Page<RentalItemResponse> getRentalItems(RentalItemCategory category, RentalItemRequest requestDto) {
         Page<RentalItem> rentalItems;
@@ -62,8 +66,7 @@ public class RentalItemService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .stock(request.getStock())
-                .category(request.getCategory())
-                .status(String.valueOf(RentalItemStatus.AVAILABLE))
+                .category(RentalItemCategory.valueOf(request.getCategory().toUpperCase()))
                 .viewCount(0)
                 .ratingAvg(BigDecimal.ZERO)
                 .userId(userId)
@@ -71,13 +74,24 @@ public class RentalItemService {
 
         rentalItemRepository.save(rentalItem);
 
+        AtomicInteger order = new AtomicInteger(0);
+
         List<RentalItemImage> images = request.getImages().stream()
-                .map(imgDto -> RentalItemImage.builder()
-                        .imageUrl(imgDto.getImageUrl())
-                        .imageOrder(imgDto.getImageOrder())
-                        .rentalItemId(rentalItem.getId())
-                        .build())
-                .toList();
+                        .map(imgDto -> {
+                            String imageUrl = null;
+                            try {
+                                imageUrl = s3Client.uploadImage("rental-item/" + uuid + "/", imgDto);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            return RentalItemImage.builder()
+                                    .imageUrl(imageUrl)
+                                    .imageOrder(order.getAndIncrement())
+                                    .rentalItemId(rentalItem.getId())
+                                    .build();
+                        })
+                        .toList();
 
         rentalItemImageRepository.saveAll(images);
     }

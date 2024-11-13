@@ -33,8 +33,8 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
         List<RentalItem> items = jpaQueryFactory.selectFrom(rentalItem)
-                .where(rentalItem.status.eq(String.valueOf(RentalItemStatus.AVAILABLE))
-                        .and(rentalItem.category.eq(category.toString()))
+                .where(rentalItem.status.eq(RentalItemStatus.AVAILABLE)
+                        .and(rentalItem.category.eq(category))
                         .and(rentalItem.isDeleted.isFalse()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -43,8 +43,8 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         // 전체 데이터 개수
         long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
                 .from(rentalItem)
-                .where(rentalItem.status.eq(String.valueOf(RentalItemStatus.AVAILABLE))
-                        .and(rentalItem.category.eq(category.toString()))
+                .where(rentalItem.status.eq(RentalItemStatus.AVAILABLE)
+                        .and(rentalItem.category.eq(category))
                         .and(rentalItem.isDeleted.isFalse()))
                 .fetchOne()).orElse(0L); // null일 경우 0으로 처리
 
@@ -111,7 +111,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                         rentalItem.name,
                         rentalItem.category,
                         orderItem.quantity,
-                        order.orderStatus.stringValue(),
+                        order.orderStatus,
                         order.rentalDate,
                         order.returnDate
                 ))
