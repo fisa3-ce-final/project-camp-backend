@@ -23,6 +23,7 @@ public class UserServiceImpl implements UserService {
     final S3Client s3Client;
 
     @Override
+    @Transactional
     public void signIn(UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         String email = principal.getTokenAttributes().get("email").toString();
