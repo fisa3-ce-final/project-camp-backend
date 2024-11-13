@@ -1,5 +1,7 @@
 package com.rental.camp.rental.model;
 
+import com.rental.camp.rental.model.type.RentalItemCategory;
+import com.rental.camp.rental.model.type.RentalItemStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -42,11 +44,13 @@ public class RentalItem {
     @Column(nullable = false)
     private Integer stock;
 
-    @Column(nullable = false, length = 255)
-    private String category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 255)
+    private RentalItemCategory category;
 
-    @Column(nullable = false, length = 50)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 50)
+    private RentalItemStatus status;
 
     @Column(nullable = false)
     private Integer viewCount;
@@ -70,6 +74,10 @@ public class RentalItem {
     public void prePersist() {
         if (this.isDeleted == null) {
             this.isDeleted = false;
+        }
+
+        if (this.status == null) {
+            this.status = RentalItemStatus.PENDING;
         }
     }
 }
