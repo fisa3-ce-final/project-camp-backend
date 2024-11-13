@@ -1,14 +1,17 @@
 package com.rental.camp.user.service;
 
+import com.rental.camp.global.config.S3Client;
 import com.rental.camp.user.dto.UserGetResponse;
 import com.rental.camp.user.dto.UserModifyRequest;
 import com.rental.camp.user.dto.UserModifyResponse;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     final UserRepository userRepository;
+    final S3Client s3Client;
 
     @Override
     public void signIn(JwtAuthenticationToken principal) {
@@ -64,20 +68,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserModifyResponse updateUser(JwtAuthenticationToken principal, UserModifyRequest userModifyRequest) {
+    @Transactional
+    public UserModifyResponse updateUser(JwtAuthenticationToken principal, UserModifyRequest userModifyRequest) throws IOException {
         UUID uuid = UUID.fromString(principal.getName());
         User user = userRepository.findByUuid(uuid);
         if (user != null) {
+            String imageUrl = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
+
             user.setPhone(userModifyRequest.getPhone());
             user.setAddress(userModifyRequest.getAddress());
             user.setNickname(userModifyRequest.getNickname());
+            user.setImageUrl(imageUrl);
+            
             userRepository.save(user);
 
             return UserModifyResponse.builder()
                     .phone(user.getPhone())
                     .address(user.getAddress())
                     .nickname(user.getNickname())
-                    .imageUrl(user.getImageUrl())
+                    .imageUrl(imageUrl)
                     .build();
         }
 
@@ -85,6 +94,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         User user = userRepository.findByUuid(uuid);

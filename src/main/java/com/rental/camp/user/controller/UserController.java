@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -46,7 +48,7 @@ public class UserController {
 
     @PutMapping
     public ResponseEntity<UserModifyResponse> updateUser(@ModelAttribute UserModifyRequest userModifyRequest,
-                                                         JwtAuthenticationToken principal) {
+                                                         JwtAuthenticationToken principal) throws IOException {
         if (principal == null) {
             return ResponseEntity.badRequest().body(null);
         }
