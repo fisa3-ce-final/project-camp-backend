@@ -188,4 +188,22 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         return new PageImpl<>(myOrders, pageable, total);
     }
+
+    @Override
+    public Page<RentalItem> findItemsByStatus(RentalItemStatus status, Pageable pageable) {
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        List<RentalItem> rentalItems = jpaQueryFactory.selectFrom(rentalItem)
+                .where(rentalItem.status.eq(status))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
+                .from(rentalItem)
+                .where(rentalItem.status.eq(status))
+                .fetchOne()).orElse(0L);
+
+        return new PageImpl<>(rentalItems, pageable, total);
+    }
 }
