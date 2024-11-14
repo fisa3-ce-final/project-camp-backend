@@ -30,7 +30,7 @@ public class RentalItemController {
     private final RentalItemService rentalItemService;
 
     @GetMapping("/category/{type}")
-    public Page<RentalItemResponse> getRentalItems(@PathVariable String type,
+    public Page<RentalItemResponse> getRentalItems(@PathVariable(name = "type") String type,
                                                    @RequestBody RentalItemRequest requestDto) {
         RentalItemCategory rentalItemCategory;
 
@@ -44,7 +44,7 @@ public class RentalItemController {
     }
 
     @GetMapping("/{id}")
-    public RentalItemDetailResponse getRentalItem(@PathVariable Long id) {
+    public RentalItemDetailResponse getRentalItem(@PathVariable(name = "id") Long id) {
         return rentalItemService.getRentalItem(id);
     }
 
