@@ -7,7 +7,6 @@ import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.UserCoupon;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.coupon.repository.UserCouponRepository;
-import com.rental.camp.order.dto.OrderConflict;
 import com.rental.camp.order.dto.OrderItemInfo;
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
@@ -30,7 +29,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -52,15 +50,6 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest requestDTO) {
-        //TO-DO
-
-
-        // 대여 기간 중복 여부 확인
-//        List<OrderConflict> conflicts = checkForConflicts(requestDTO);
-//        if (!conflicts.isEmpty()) {
-//            // 중복된 아이템 정보를 포함한 응답 반환
-//            return new OrderResponse("예약 불가 - 중복된 대여 기간이 있습니다.", requestDTO.getUserId(), conflicts);
-//        }
 
         // 주문 생성
         Order order = new Order();
@@ -348,77 +337,6 @@ public class OrderService {
         };
     }
 
-    @Transactional
-    private List<OrderConflict> checkForConflicts(OrderRequest requestDTO) {
-        // 1. 요청한 CartItem으로부터 rentalItemId 목록 조회
-        List<com.rental.camp.order.dto.CartItem> cartItems = cartItemRepository.findAllByIdAndUserId(requestDTO.getCartItemIds(), requestDTO.getUserId());
-        List<Long> requestedRentalItemIds = cartItems.stream()
-                .map(com.rental.camp.order.dto.CartItem::getRentalItemId)
-                .collect(Collectors.toList());
-
-        // 2. 대여 기간이 겹치는 주문의 ID 목록 조회
-        QOrder qOrder = QOrder.order;
-
-        List<Long> overlappingOrderIds = queryFactory
-                .select(qOrder.id)
-                .from(qOrder)
-                .where(
-                        qOrder.orderStatus.ne(OrderStatus.CANCELLED)
-                                .and(qOrder.rentalDate.lt(requestDTO.getReturnDate()))
-                                .and(qOrder.returnDate.gt(requestDTO.getRentalDate()))
-                )
-                .fetch();
-
-        List<OrderConflict> conflicts = new ArrayList<>();
-
-        if (!overlappingOrderIds.isEmpty()) {
-            // 3. 겹치는 주문의 OrderItem 중에서 요청한 rentalItemId와 겹치는 것 조회
-            QOrderItem qOrderItem = QOrderItem.orderItem;
-            QRentalItem qRentalItem = QRentalItem.rentalItem;
-
-            List<OrderConflict> dateConflicts = queryFactory
-                    .select(Projections.constructor(OrderConflict.class,
-                            qRentalItem.name,
-                            qOrder.returnDate))
-                    .from(qOrderItem)
-                    .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
-                    .join(qOrder).on(qOrderItem.orderId.eq(qOrder.id))
-                    .where(
-                            qOrderItem.rentalItemId.in(requestedRentalItemIds)
-                                    .and(qOrderItem.orderId.in(overlappingOrderIds))
-                    )
-                    .fetch();
-
-            conflicts.addAll(dateConflicts);
-        }
-
-        // 4. 재고 충돌 확인
-        // 요청된 rentalItemId에 해당하는 RentalItem 조회 (재고 정보 포함)
-        List<RentalItem> rentalItems = rentalItemRepository.findAllById(requestedRentalItemIds);
-
-        // rentalItemId를 키로 하는 RentalItem 맵 생성
-        Map<Long, RentalItem> rentalItemMap = rentalItems.stream()
-                .collect(Collectors.toMap(RentalItem::getId, Function.identity()));
-
-        for (com.rental.camp.order.dto.CartItem cartItem : cartItems) {
-            RentalItem rentalItem = rentalItemMap.get(cartItem.getRentalItemId());
-            if (rentalItem == null) {
-                conflicts.add(new OrderConflict("알 수 없는 아이템", "rentalItemId: " + cartItem.getRentalItemId() + "을(를) 찾을 수 없습니다."));
-                continue;
-            }
-
-            // 현재 재고에서 요청된 수량을 뺀 값 계산
-            int remainingStock = rentalItem.getStock() - cartItem.getQuantity();
-            if (remainingStock < 0) {
-                conflicts.add(new OrderConflict(
-                        rentalItem.getName(),
-                        "재고 부족: 현재 재고는 " + rentalItem.getStock() + "개이며, 요청된 수량은 " + cartItem.getQuantity() + "개입니다."
-                ));
-            }
-        }
-
-        return conflicts;
-    }
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderDetails(Long orderId, Long userId) {

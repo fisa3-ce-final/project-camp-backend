@@ -2,65 +2,107 @@ package com.rental.camp.order.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.rental.camp.order.dto.CartItem;
 import com.rental.camp.order.dto.CartItemResponse;
-import com.rental.camp.order.model.QCartItem;
 import com.rental.camp.rental.dto.RentalItemResponse;
-import com.rental.camp.rental.model.QRentalItem;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 import static com.rental.camp.order.model.QCartItem.cartItem;
+import static com.rental.camp.rental.model.QRentalItem.rentalItem;
 
+@Repository
 @RequiredArgsConstructor
 public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
-
     private final JPAQueryFactory queryFactory;
 
     @Override
     public boolean existsByUserIdAndRentalItemId(Long userId, Long rentalItemId) {
-        return queryFactory.selectOne()
+        Integer result = queryFactory
+                .selectOne()
                 .from(cartItem)
                 .where(cartItem.userId.eq(userId)
                         .and(cartItem.rentalItemId.eq(rentalItemId)))
-                .fetchFirst() != null;
+                .fetchFirst();
+        return result != null;
     }
 
+    @Override
     public CartItemResponse findCartItemWithRentalInfo(Long cartItemId, Long userId) {
         return queryFactory
                 .select(Projections.constructor(CartItemResponse.class,
-                        QCartItem.cartItem.id,
-                        QCartItem.cartItem.quantity,
+                        cartItem.id,
+                        cartItem.quantity,
                         Projections.constructor(RentalItemResponse.class,
-                                QRentalItem.rentalItem.id,
-                                QRentalItem.rentalItem.name,
-                                QRentalItem.rentalItem.price,
-                                QRentalItem.rentalItem.stock,
-                                QRentalItem.rentalItem.category,
-                                QRentalItem.rentalItem.status
+                                rentalItem.id,
+                                rentalItem.name,
+                                rentalItem.price,
+                                rentalItem.stock,
+                                rentalItem.category,
+                                rentalItem.status
                         )
                 ))
-                .from(QCartItem.cartItem)
-                .join(QRentalItem.rentalItem).on(QCartItem.cartItem.rentalItemId.eq(QRentalItem.rentalItem.id))
+                .from(cartItem)
+                .join(rentalItem).on(cartItem.rentalItemId.eq(rentalItem.id))
                 .where(
-                        QCartItem.cartItem.id.eq(cartItemId),
-                        QCartItem.cartItem.userId.eq(userId)
+                        cartItem.id.eq(cartItemId),
+                        cartItem.userId.eq(userId)
                 )
                 .fetchOne();
     }
 
     @Override
-    public long updateCartItemQuantity(Long cartItemId, Long userId, Integer quantity) {
-        return queryFactory
-                .update(QCartItem.cartItem)
-                .set(QCartItem.cartItem.quantity, quantity)
+    public boolean updateCartItemQuantity(Long cartItemId, Long userId, Integer quantity) {
+        long updatedCount = queryFactory
+                .update(cartItem)
+                .set(cartItem.quantity, quantity)
                 .where(
-                        QCartItem.cartItem.id.eq(cartItemId),
-                        QCartItem.cartItem.userId.eq(userId)
+                        cartItem.id.eq(cartItemId),
+                        cartItem.userId.eq(userId)
                 )
                 .execute();
+        return updatedCount > 0;
     }
+
+    @Override
+    public List<CartItemResponse> findCartItemsWithRentalInfoByUserId(Long userId) {
+        return queryFactory
+                .select(Projections.constructor(CartItemResponse.class,
+                        cartItem.id,
+                        cartItem.quantity,
+                        Projections.constructor(RentalItemResponse.class,
+                                rentalItem.id,
+                                rentalItem.name,
+                                rentalItem.price,
+                                rentalItem.stock,
+                                rentalItem.category,
+                                rentalItem.status
+                        )
+                ))
+                .from(cartItem)
+                .join(rentalItem).on(cartItem.rentalItemId.eq(rentalItem.id))
+                .where(cartItem.userId.eq(userId))
+                .fetch();
+    }
+
+//    @Override
+//    public List<CartItem> findAllByIdAndUserId(List<Long> cartItemIds, Long userId) {
+//        return queryFactory
+//                .select(Projections.constructor(CartItem.class,
+//                        cartItem.id,
+//                        cartItem.userId,
+//                        cartItem.rentalItemId,
+//                        cartItem.quantity
+//                ))
+//                .from(cartItem)
+//                .where(
+//                        cartItem.id.in(cartItemIds)
+//                                .and(cartItem.userId.eq(userId))
+//                )
+//                .fetch();
+//    }
+}
 
 //    @Override
 //    public List<BigDecimal> findRentalItemPricesByCartItemIds(List<Long> cartItemIds) {
@@ -73,47 +115,3 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 //                .where(cartItem.id.in(cartItemIds))
 //                .fetch();
 //    }
-
-
-    @Override
-    public List<CartItemResponse> findCartItemsWithRentalInfoByUserId(Long userId) {
-        return queryFactory
-                .select(Projections.constructor(CartItemResponse.class,
-                        QCartItem.cartItem.id,
-                        QCartItem.cartItem.quantity,
-                        Projections.constructor(RentalItemResponse.class,
-                                QRentalItem.rentalItem.id,
-                                QRentalItem.rentalItem.name,
-                                QRentalItem.rentalItem.price,
-                                QRentalItem.rentalItem.stock,
-                                QRentalItem.rentalItem.category,
-                                QRentalItem.rentalItem.status
-                        )
-                ))
-                .from(QCartItem.cartItem)
-                .join(QRentalItem.rentalItem).on(QCartItem.cartItem.rentalItemId.eq(QRentalItem.rentalItem.id))
-                .where(QCartItem.cartItem.userId.eq(userId))
-                .fetch();
-    }
-
-    @Override
-    public List<CartItem> findAllByIdAndUserId(List<Long> cartItemIds, Long userId) {
-        QCartItem qCartItem = QCartItem.cartItem;
-
-        return queryFactory
-                .select(Projections.constructor(CartItem.class,
-                        qCartItem.id,
-                        qCartItem.userId,
-                        qCartItem.rentalItemId,
-                        qCartItem.quantity
-                        // 필요한 다른 필드들 추가
-                ))
-                .from(qCartItem)
-                .where(
-                        qCartItem.id.in(cartItemIds)
-                                .and(qCartItem.userId.eq(userId))
-                )
-                .fetch();
-    }
-
-}
