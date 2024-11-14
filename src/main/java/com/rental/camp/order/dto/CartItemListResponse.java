@@ -1,7 +1,7 @@
 package com.rental.camp.order.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rental.camp.coupon.dto.Coupon;
+import com.rental.camp.coupon.dto.CouponResponse;
 import lombok.*;
 
 import java.util.List;
@@ -15,5 +15,5 @@ import java.util.List;
 public class CartItemListResponse {
     private Long userId;
     private List<CartItemResponse> cartItems;
-    private List<Coupon> coupons;
+    private List<CouponResponse> coupons;
 }
