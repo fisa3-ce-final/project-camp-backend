@@ -13,6 +13,8 @@ import com.rental.camp.rental.model.QRentalItemImage;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.model.type.RentalItemStatus;
+import com.rental.camp.rental.model.type.RentalStatus;
+import com.rental.camp.user.model.QUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -205,5 +207,41 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .fetchOne()).orElse(0L);
 
         return new PageImpl<>(rentalItems, pageable, total);
+    }
+
+    @Override
+    public Integer countByRentalItemStatus(RentalItemStatus status) {
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        Long auditNum = jpaQueryFactory.select(rentalItem.count())
+                .from(rentalItem)
+                .where(rentalItem.status.eq(status))
+                .fetchOne();
+
+        return auditNum.intValue();
+    }
+
+    @Override
+    public Integer countByRentalStatus(RentalStatus status) {
+        QOrder order = QOrder.order;
+
+        Long rentalNum = jpaQueryFactory.select(order.count())
+                .from(order)
+                .where(order.rentalStatus.eq(String.valueOf(status)))
+                .fetchOne();
+
+        return rentalNum.intValue();
+    }
+
+    @Override
+    public Integer countByMonth(int month) {
+        QUser user = QUser.user;
+
+        Long userNum = jpaQueryFactory.select(user.count())
+                .from(user)
+                .where(user.createdAt.month().eq(month))
+                .fetchOne();
+
+        return userNum.intValue();
     }
 }

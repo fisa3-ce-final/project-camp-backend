@@ -2,6 +2,7 @@ package com.rental.camp.admin.controller;
 
 import com.rental.camp.admin.dto.AuditRequest;
 import com.rental.camp.admin.dto.AuditResponse;
+import com.rental.camp.admin.dto.DashboardStatusResponse;
 import com.rental.camp.admin.dto.UpdateStatusRequest;
 import com.rental.camp.admin.service.AdminService;
 import com.rental.camp.rental.model.type.RentalItemStatus;
@@ -16,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 public class AdminController {
     private final AdminService adminService;
+
+    @GetMapping("/dashboard/status")
+    public DashboardStatusResponse getDashboardStatus() {
+        return adminService.getDashboardStatus();
+    }
 
     @GetMapping("/rental-items")
     public Page<AuditResponse> getAuditList(@RequestBody AuditRequest request) {

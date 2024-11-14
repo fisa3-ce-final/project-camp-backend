@@ -7,6 +7,7 @@ import com.rental.camp.rental.dto.RentalItemDetailResponse;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.model.type.RentalItemStatus;
+import com.rental.camp.rental.model.type.RentalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,4 +18,7 @@ public interface RentalItemRepositoryCustom {
     Page<MyItemsResponse> findItemsByUserId(Long userId, Pageable pageable);
     Page<MyOrdersResponse> findOrdersByUserId(Long userId, Pageable pageable);
     Page<RentalItem> findItemsByStatus(RentalItemStatus status, Pageable pageable);
+    Integer countByRentalItemStatus(RentalItemStatus status);
+    Integer countByRentalStatus(RentalStatus status);
+    Integer countByMonth(int month);
 }
