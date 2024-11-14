@@ -1,7 +1,5 @@
 package com.rental.camp.order.service;
 
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.UserCoupon;
@@ -10,15 +8,15 @@ import com.rental.camp.coupon.repository.UserCouponRepository;
 import com.rental.camp.order.dto.OrderItemInfo;
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
-import com.rental.camp.order.model.*;
+import com.rental.camp.order.model.CartItem;
+import com.rental.camp.order.model.Order;
+import com.rental.camp.order.model.OrderItem;
 import com.rental.camp.order.model.type.OrderStatus;
 import com.rental.camp.order.repository.CartItemRepository;
 import com.rental.camp.order.repository.OrderItemRepository;
 import com.rental.camp.order.repository.OrderRepository;
-import com.rental.camp.rental.model.QRentalItem;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.repository.RentalItemRepository;
-import com.rental.camp.user.model.QUser;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +29,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -50,275 +48,44 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest requestDTO) {
-
-        // 주문 생성
-        Order order = new Order();
-        order.setUserId(requestDTO.getUserId());
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setRentalDate(requestDTO.getRentalDate());
-        order.setReturnDate(requestDTO.getReturnDate());
-        order.setCouponId(requestDTO.getUserCouponId()); // 쿠폰 ID 설정 (선택적)
-
-        // 주문 저장
-        orderRepository.save(order);
-
-        // 주문 아이템 생성 및 저장
+        Order order = orderRepository.save(createInitialOrder(requestDTO));
         List<CartItem> cartItems = cartItemRepository.findAllById(requestDTO.getCartItemIds());
 
-        // RentalItem 정보를 QueryDSL로 조회하여 가격 정보 가져오기
-        List<Long> rentalItemIds = cartItems.stream()
-                .map(CartItem::getRentalItemId)
-                .collect(Collectors.toList());
+        Map<Long, RentalItem> rentalItemMap = orderRepository.findRentalItemsByIds(
+                cartItems.stream().map(CartItem::getRentalItemId).collect(Collectors.toList())
+        );
 
-        QRentalItem qRentalItem = QRentalItem.rentalItem;
+        //주의
+        long rentalDays = calculateRentalDays(order);
 
-        List<RentalItem> rentalItems = queryFactory
-                .selectFrom(qRentalItem)
-                .where(qRentalItem.id.in(rentalItemIds))
-                .fetch();
+        BigDecimal totalItemPrice = createOrderItems(order, cartItems, rentalItemMap, rentalDays);
 
-        Map<Long, RentalItem> rentalItemMap = rentalItems.stream()
-                .collect(Collectors.toMap(RentalItem::getId, Function.identity()));
+        processCouponAndUpdateTotal(order, requestDTO.getUserCouponId(), totalItemPrice);
 
-        BigDecimal totalItemPrice = BigDecimal.ZERO;
+        User user = orderRepository.findUserById(requestDTO.getUserId())
+                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + requestDTO.getUserId()));
 
-        long rentalDays = ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate());
-        if (rentalDays <= 0) {
-            rentalDays = 1;
-        }
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
-        // 주문 아이템 생성 및 총 금액 계산
-        for (CartItem cartItem : cartItems) {
-            RentalItem item = rentalItemMap.get(cartItem.getRentalItemId());
-            if (item == null) {
-                throw new RuntimeException("RentalItem을 찾을 수 없습니다: " + cartItem.getRentalItemId());
-            }
+        return createOrderResponse(order, user, orderItems, totalItemPrice, rentalDays);
+    }
 
-            BigDecimal pricePerDay = item.getPrice();
-            BigDecimal subtotal = pricePerDay.multiply(BigDecimal.valueOf(cartItem.getQuantity()))
-                    .multiply(BigDecimal.valueOf(rentalDays));
+    private OrderResponse createOrderResponse(Order order, User user,
+                                              List<OrderItemInfo> orderItems, BigDecimal totalItemPrice, long rentalDays) {
+        BigDecimal finalPrice = order.getTotalAmount();
+        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
+        BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrderId(order.getId());
-            orderItem.setRentalItemId(cartItem.getRentalItemId());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(pricePerDay);
-            orderItem.setSubtotal(subtotal);
-            orderItemRepository.save(orderItem);
-
-            totalItemPrice = totalItemPrice.add(subtotal);
-        }
-
-        // 쿠폰 적용 후 최종 금액 계산
-        BigDecimal finalPrice = totalItemPrice;
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (requestDTO.getUserCouponId() != null) {
-            Coupon coupon = couponRepository.findById(requestDTO.getUserCouponId())
-                    .orElseThrow(() -> new RuntimeException("Coupon을 찾을 수 없습니다: " + requestDTO.getUserCouponId()));
-            BigDecimal discountedPrice = applyCouponDiscount(totalItemPrice, coupon);
-            discountAmount = totalItemPrice.subtract(discountedPrice);
-            finalPrice = discountedPrice;
-        }
-
-        // 주문의 총 금액 업데이트
-        order.setTotalAmount(finalPrice);
-        orderRepository.save(order);
-
-        // User 정보를 QueryDSL로 조회하여 username, address, phone 가져오기
-        QUser qUser = QUser.user;
-
-        User userEntity = queryFactory
-                .selectFrom(qUser)
-                .where(qUser.id.eq(requestDTO.getUserId()))
-                .fetchOne();
-
-        if (userEntity == null) {
-            throw new RuntimeException("User를 찾을 수 없습니다: " + requestDTO.getUserId());
-        }
-
-        // 주문 아이템 정보 조회
-        QOrderItem qOrderItem = QOrderItem.orderItem;
-        QRentalItem qRentalItemAlias = QRentalItem.rentalItem;
-
-        List<OrderItemInfo> orderItems = queryFactory
-                .select(Projections.constructor(OrderItemInfo.class,
-                        qOrderItem.rentalItemId,                  // rentalItemId 추가
-                        qRentalItemAlias.name.as("itemName"),
-                        qOrderItem.quantity,
-                        qOrderItem.price,
-                        qOrderItem.subtotal))
-                .from(qOrderItem)
-                .join(qRentalItemAlias).on(qOrderItem.rentalItemId.eq(qRentalItemAlias.id))
-                .where(qOrderItem.orderId.eq(order.getId()))
-                .fetch();
-
-        // 주문 생성 날짜 포맷
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String formattedCreatedAt = order.getCreatedAt().format(formatter);
 
-        // 응답 객체 생성 및 반환
         return new OrderResponse(
-                requestDTO.getUserId(),
+                order.getUserId(),
                 "예약이 성공적으로 생성되었습니다.",
                 order.getId(),
-                userEntity.getUsername(),
-                userEntity.getAddress(),
-                userEntity.getPhone(),
-                orderItems,
-                rentalDays,
-                totalItemPrice,
-                discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null,
-                finalPrice,
-                formattedCreatedAt
-        );
-    }
-
-    @Transactional
-    public OrderResponse completeOrder(OrderRequest request) {
-        QOrder qOrder = QOrder.order;
-        QOrderItem qOrderItem = QOrderItem.orderItem;
-        QRentalItem qRentalItem = QRentalItem.rentalItem;
-        QUser qUser = QUser.user;
-
-
-        // 1. 주문 찾기
-        Long cartItemId = request.getCartItemIds().get(0);
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("CartItem not found: " + cartItemId));
-
-        // 2. 해당 주문 찾기 (PENDING 상태인 주문 중 해당 사용자와 rentalItemId를 가진 주문)
-        Order existingOrder = queryFactory
-                .selectFrom(qOrder)
-                .where(
-                        qOrder.userId.eq(request.getUserId())
-                                .and(qOrder.orderStatus.eq(OrderStatus.PENDING))
-                                .and(
-                                        JPAExpressions
-                                                .selectOne()
-                                                .from(qOrderItem)
-                                                .where(
-                                                        qOrderItem.orderId.eq(qOrder.id)
-                                                                .and(qOrderItem.rentalItemId.eq(cartItem.getRentalItemId()))
-                                                )
-                                                .exists()
-                                )
-                )
-                .fetchOne();
-
-        if (existingOrder == null) {
-            throw new RuntimeException("주문을 찾을 수 없습니다.");
-        }
-
-        // 3. 주문 상태를 COMPLETED로 업데이트
-        long updatedCount = queryFactory
-                .update(qOrder)
-                .set(qOrder.orderStatus, OrderStatus.COMPLETED)
-                .where(qOrder.id.eq(existingOrder.getId()))
-                .execute();
-
-        //  업데이트 결과 확인
-        if (updatedCount == 0) {
-            throw new RuntimeException("주문 상태 업데이트 실패: 해당하는 주문을 찾을 수 없습니다.");
-        }
-        // 4. 쿠폰 사용 여부 업데이트
-        if (existingOrder.getCouponId() != null) {
-            Long couponId = existingOrder.getCouponId();
-            Long userId = existingOrder.getUserId();
-            UserCoupon userCoupon = userCouponRepository.findByCouponIdAndUserId(couponId, userId)
-                    .orElseThrow(() -> new RuntimeException("사용자의 쿠폰을 찾을 수 없습니다. CouponId: " + couponId + ", UserId: " + userId));
-
-            if (!userCoupon.getIsUsed()) { // 이미 사용된 쿠폰인지 확인
-                userCoupon.setIsUsed(true);
-                userCouponRepository.save(userCoupon);
-            }
-        }
-
-
-        // 5. 주문 아이템 정보 조회 및 totalItemPrice 계산
-        List<OrderItemInfo> orderItems = queryFactory
-                .select(Projections.constructor(OrderItemInfo.class,
-                        qOrderItem.rentalItemId,                  // rentalItemId 추가
-                        qRentalItem.name.as("itemName"),
-                        qOrderItem.quantity,
-                        qOrderItem.price,
-                        qOrderItem.subtotal))
-                .from(qOrderItem)
-                .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
-                .where(qOrderItem.orderId.eq(existingOrder.getId()))
-                .fetch();
-
-        // totalItemPrice 계산
-        BigDecimal totalItemPrice = orderItems.stream()
-                .map(OrderItemInfo::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // finalPrice는 이미 Order의 totalAmount에 저장되어 있음
-        BigDecimal finalPrice = existingOrder.getTotalAmount();
-
-        // discountAmount 계산 (finalPrice < totalItemPrice 인 경우)
-        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
-
-        // rentalDays 계산
-        long rentalDays = ChronoUnit.DAYS.between(existingOrder.getRentalDate().toLocalDate(), existingOrder.getReturnDate().toLocalDate());
-        if (rentalDays <= 0) {
-            rentalDays = 1;
-        }
-
-        // User 정보 조회
-        User userEntity = queryFactory
-                .selectFrom(qUser)
-                .where(qUser.id.eq(request.getUserId()))
-                .fetchOne();
-
-        if (userEntity == null) {
-            throw new RuntimeException("User를 찾을 수 없습니다: " + request.getUserId());
-        }
-
-        // 할인 금액이 없는 경우 null로 설정
-        BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
-
-        // 주문 생성 날짜 포맷
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedCreatedAt = existingOrder.getCreatedAt().format(formatter);
-
-        // 6. 장바구니 삭제 로직 추가
-        // 주문에 사용된 모든 OrderItems의 rentalItemId를 기반으로 장바구니 항목을 삭제합니다.
-        List<Long> orderRentalItemIds = queryFactory
-                .select(qOrderItem.rentalItemId)
-                .from(qOrderItem)
-                .where(qOrderItem.orderId.eq(existingOrder.getId()))
-                .fetch();
-
-        // 사용자 ID와 rentalItemIds를 기반으로 장바구니 항목 삭제
-
-        cartItemRepository.deleteAllByUserIdAndRentalItemIdIn(existingOrder.getUserId(), orderRentalItemIds);
-
-        // 7. RentalItem의 stock 감소 로직 추가
-
-        for (OrderItemInfo orderItem : orderItems) {
-
-            Long rentalItemId = orderItem.getRentalItemId();
-            Integer quantity = orderItem.getQuantity();
-
-            RentalItem rentalItem = rentalItemRepository.findById(rentalItemId)
-                    .orElseThrow(() -> new RuntimeException("RentalItem을 찾을 수 없습니다. ID: " + rentalItemId));
-
-            if (rentalItem.getStock() < quantity) {
-                throw new RuntimeException("재고가 부족한 상품이 있습니다. 상품 ID: " + rentalItemId);
-            }
-
-            rentalItem.setStock(rentalItem.getStock() - quantity);
-            rentalItemRepository.save(rentalItem);
-        }
-
-        // 응답 객체 생성 및 반환
-        return new OrderResponse(
-                request.getUserId(),
-                "주문이 완료되었습니다.",
-                existingOrder.getId(),
-                userEntity.getUsername(),
-                userEntity.getAddress(),
-                userEntity.getPhone(),
+                user.getUsername(),
+                user.getAddress(),
+                user.getPhone(),
                 orderItems,
                 rentalDays,
                 totalItemPrice,
@@ -326,8 +93,84 @@ public class OrderService {
                 finalPrice,
                 formattedCreatedAt
         );
-
     }
+
+
+    @Transactional
+    private void updateUserCouponStatus(Order order) {
+        UserCoupon userCoupon = userCouponRepository
+                .findByCouponIdAndUserId(order.getCouponId(), order.getUserId())
+                .orElseThrow(() -> new RuntimeException(
+                        "사용자의 쿠폰을 찾을 수 없습니다. CouponId: " + order.getCouponId() +
+                                ", UserId: " + order.getUserId()));
+
+        if (!userCoupon.getIsUsed()) {
+            userCoupon.setIsUsed(true);
+            userCouponRepository.save(userCoupon);
+        }
+    }
+
+    @Transactional
+    private void processOrderCompletion(Order existingOrder, List<OrderItemInfo> orderItems) {
+        // 장바구니 항목 삭제
+        List<Long> orderRentalItemIds = orderItems.stream()
+                .map(OrderItemInfo::getRentalItemId)
+                .collect(Collectors.toList());
+
+        cartItemRepository.deleteAllByUserIdAndRentalItemIdIn(
+                existingOrder.getUserId(),
+                orderRentalItemIds
+        );
+
+        // 재고 감소
+        for (OrderItemInfo orderItem : orderItems) {
+            RentalItem rentalItem = rentalItemRepository
+                    .findById(orderItem.getRentalItemId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "RentalItem을 찾을 수 없습니다. ID: " + orderItem.getRentalItemId()));
+
+            if (rentalItem.getStock() < orderItem.getQuantity()) {
+                throw new RuntimeException(
+                        "재고가 부족한 상품이 있습니다. 상품 ID: " + orderItem.getRentalItemId());
+            }
+
+            rentalItem.setStock(rentalItem.getStock() - orderItem.getQuantity());
+            rentalItemRepository.save(rentalItem);
+        }
+    }
+
+    @Transactional
+    public OrderResponse completeOrder(OrderRequest request) {
+        Order existingOrder = orderRepository.findPendingOrderByUserAndItem(request)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+
+        orderRepository.updateOrderStatus(existingOrder.getId(), OrderStatus.COMPLETED);
+
+        if (existingOrder.getCouponId() != null) {
+            updateUserCouponStatus(existingOrder);
+        }
+
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(existingOrder.getId());
+
+        processOrderCompletion(existingOrder, orderItems);
+
+        return createCompletedOrderResponse(existingOrder, orderItems);
+    }
+
+    private OrderResponse createCompletedOrderResponse(Order order, List<OrderItemInfo> orderItems) {
+        User user = userRepository.findById(order.getUserId())
+                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + order.getUserId()));
+
+        BigDecimal totalItemPrice = orderItems.stream()
+                .map(OrderItemInfo::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long rentalDays = calculateRentalDays(order);
+        OrderResponse completeResponse = createOrderResponse(order, user, orderItems, totalItemPrice, rentalDays);
+        completeResponse.setMessage("주문이 성공적으로 완료되었습니다.");
+        return completeResponse;
+    }
+
 
     private BigDecimal applyCouponDiscount(BigDecimal totalAmount, Coupon coupon) {
         return switch (coupon.getType()) {
@@ -337,81 +180,28 @@ public class OrderService {
         };
     }
 
+    private OrderResponse createOrderDetailsResponse(Order order, List<OrderItemInfo> orderItems) {
+        User user = userRepository.findById(order.getUserId())
+                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + order.getUserId()));
 
-    @Transactional(readOnly = true)
-    public OrderResponse getOrderDetails(Long orderId, Long userId) {
-        QOrder qOrder = QOrder.order;
-        QOrderItem qOrderItem = QOrderItem.orderItem;
-        QRentalItem qRentalItem = QRentalItem.rentalItem;
-        QUser qUser = QUser.user;
-
-        // 1. 주문 조회
-        Order order = queryFactory
-                .selectFrom(qOrder)
-                .where(
-                        qOrder.id.eq(orderId)
-                                .and(qOrder.userId.eq(userId))
-                )
-                .fetchOne();
-
-        if (order == null) {
-            throw new RuntimeException("주문을 찾을 수 없습니다.");
-        }
-
-        // 2. 주문 아이템 정보 조회 및 totalItemPrice 계산
-        List<OrderItemInfo> orderItems = queryFactory
-                .select(Projections.constructor(OrderItemInfo.class,
-                        qOrderItem.rentalItemId,
-                        qRentalItem.name.as("itemName"),
-                        qOrderItem.quantity,
-                        qOrderItem.price,
-                        qOrderItem.subtotal))
-                .from(qOrderItem)
-                .join(qRentalItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id))
-                .where(qOrderItem.orderId.eq(orderId))
-                .fetch();
-
-        if (orderItems.isEmpty()) {
-            throw new RuntimeException("주문 아이템을 찾을 수 없습니다.");
-        }
-
-        // 3. totalItemPrice 계산
         BigDecimal totalItemPrice = orderItems.stream()
                 .map(OrderItemInfo::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // finalPrice는 order의 totalAmount
         BigDecimal finalPrice = order.getTotalAmount();
-
-        // 4. discountAmount 계산
         BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
         BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
 
-        // 5. rentalDays 계산
-        long rentalDays = ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate());
-        if (rentalDays <= 0) {
-            rentalDays = 1;
-        }
+        long rentalDays = calculateRentalDays(order);
 
-        // 6. User 정보 조회
-        User user = queryFactory
-                .selectFrom(qUser)
-                .where(qUser.id.eq(userId))
-                .fetchOne();
-
-        if (user == null) {
-            throw new RuntimeException("User를 찾을 수 없습니다: " + userId);
-        }
-
-        // 7. 주문 생성 날짜 포맷
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String formattedCreatedAt = order.getCreatedAt().format(formatter);
         String updatedAt = String.valueOf(order.getUpdatedAt());
-        // 8. 응답 객체 생성 및 반환
+
         return new OrderResponse(
-                userId,
+                order.getUserId(),
                 String.format("주문 조회가 완료되었습니다. 주문 상태: %s", order.getOrderStatus()),
-                orderId,
+                order.getId(),
                 user.getUsername(),
                 user.getAddress(),
                 user.getPhone(),
@@ -425,27 +215,91 @@ public class OrderService {
         );
     }
 
-    @Transactional
-    public OrderResponse cancelOrder(Long orderId, Long userId) {
-        // 1. 취소 가능한 주문 조회
-        Order order = orderRepository.findCancellableOrder(orderId, userId)
-                .orElseThrow(() -> new RuntimeException("취소할 수 없는 주문입니다. 주문 후 30분이 경과했거나 존재하지 않는 주문입니다."));
+    private OrderItem createOrderItem(Order order, CartItem cartItem, RentalItem item, long rentalDays) {
+        BigDecimal pricePerDay = item.getPrice();
+        BigDecimal subtotal = pricePerDay
+                .multiply(BigDecimal.valueOf(cartItem.getQuantity()))
+                .multiply(BigDecimal.valueOf(rentalDays));
 
-        // 2. 주문 상태 CANCELLED로 변경
-        boolean updated = orderRepository.updateOrderStatus(orderId, OrderStatus.CANCELLED);
-        if (!updated) {
-            throw new RuntimeException("주문 취소 실패: 상태 업데이트가 되지 않았습니다.");
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrderId(order.getId());
+        orderItem.setRentalItemId(cartItem.getRentalItemId());
+        orderItem.setQuantity(cartItem.getQuantity());
+        orderItem.setPrice(pricePerDay);
+        orderItem.setSubtotal(subtotal);
+
+        return orderItem;
+    }
+
+
+    public OrderResponse getOrderDetails(Long orderId, Long userId) {
+        Order order = orderRepository.findOrderByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(orderId);
+
+        if (orderItems.isEmpty()) {
+            throw new RuntimeException("주문 아이템을 찾을 수 없습니다.");
         }
 
-        // 3. 쿠폰 상태 복구
+        return createOrderDetailsResponse(order, orderItems);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, Long userId) {
+        Order order = orderRepository.findCancellableOrder(orderId, userId)
+                .orElseThrow(() -> new RuntimeException("취소할 수 없는 주문입니다."));
+
+        orderRepository.updateOrderStatus(orderId, OrderStatus.CANCELLED);
+
         restoreUserCoupon(order);
 
-        // 4. 주문 아이템 조회 및 재고 복구
-        List<OrderItemInfo> orderItems = orderRepository.findOrderItems(orderId);
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(orderId);
         restoreRentalItemsStock(orderItems);
 
-        // 5. 응답 데이터 준비
         return createOrderCancellationResponse(order, orderItems);
+    }
+
+
+    private BigDecimal createOrderItems(Order order, List<CartItem> cartItems,
+                                        Map<Long, RentalItem> rentalItemMap, long rentalDays) {
+        BigDecimal totalItemPrice = BigDecimal.ZERO;
+
+        for (CartItem cartItem : cartItems) {
+            RentalItem item = rentalItemMap.get(cartItem.getRentalItemId());
+            if (item == null) {
+                throw new RuntimeException("RentalItem을 찾을 수 없습니다: " + cartItem.getRentalItemId());
+            }
+
+            OrderItem orderItem = createOrderItem(order, cartItem, item, rentalDays);
+            orderItemRepository.save(orderItem);
+            totalItemPrice = totalItemPrice.add(orderItem.getSubtotal());
+        }
+
+        return totalItemPrice;
+    }
+
+    private void processCouponAndUpdateTotal(Order order, Long couponId, BigDecimal totalItemPrice) {
+        BigDecimal finalPrice = totalItemPrice;
+
+        if (couponId != null) {
+            Coupon coupon = couponRepository.findById(couponId)
+                    .orElseThrow(() -> new RuntimeException("Coupon을 찾을 수 없습니다: " + couponId));
+            finalPrice = applyCouponDiscount(totalItemPrice, coupon);
+        }
+
+        order.setTotalAmount(finalPrice);
+        orderRepository.save(order);
+    }
+
+    private Order createInitialOrder(OrderRequest requestDTO) {
+        Order order = new Order();
+        order.setUserId(requestDTO.getUserId());
+        order.setOrderStatus(OrderStatus.PENDING);
+        order.setRentalDate(requestDTO.getRentalDate());
+        order.setReturnDate(requestDTO.getReturnDate());
+        order.setCouponId(requestDTO.getUserCouponId());
+        return order;
     }
 
     private void restoreUserCoupon(Order order) {
