@@ -42,7 +42,7 @@ public class CustomJwtAuthenticationFilter extends OncePerRequestFilter {
             );
 
             Collection<GrantedAuthority> authorities = new HashSet<>(jwtGrantedAuthoritiesConverter.convert(guestJwt));
-            authorities.add((GrantedAuthority) () -> "ROLE_USER");
+            authorities.add((GrantedAuthority) () -> "ROLE_ADMIN");
 
             JwtAuthenticationToken guestAuthToken = new JwtAuthenticationToken(guestJwt, authorities);
             SecurityContextHolder.getContext().setAuthentication(guestAuthToken);
