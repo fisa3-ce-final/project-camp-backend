@@ -1,6 +1,6 @@
 package com.rental.camp.order.service;
 
-import com.rental.camp.coupon.dto.Coupon;
+import com.rental.camp.coupon.dto.CouponResponse;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.order.dto.*;
 import com.rental.camp.order.repository.CartItemRepository;
@@ -83,7 +83,7 @@ public class CartItemService {
     public CartItemListResponse getCartItemsByUserId(String uuid) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         List<CartItemResponse> cartItems = cartItemRepository.findCartItemsWithRentalInfoByUserId(userId);
-        List<Coupon> coupons = couponRepository.findCouponsByUserId(userId);
+        List<CouponResponse> coupons = couponRepository.findCouponsByUserId(userId);
 
         return CartItemListResponse.builder()
                 .userId(userId)
