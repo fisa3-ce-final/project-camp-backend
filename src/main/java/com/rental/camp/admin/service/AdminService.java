@@ -2,6 +2,7 @@ package com.rental.camp.admin.service;
 
 import com.rental.camp.admin.dto.AuditRequest;
 import com.rental.camp.admin.dto.AuditResponse;
+import com.rental.camp.admin.dto.UpdateStatusRequest;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.repository.RentalItemRepository;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -36,5 +38,14 @@ public class AdminService {
 
             return response;
         });
+    }
+
+    @Transactional
+    public RentalItemStatus reviewAudit(Long id, UpdateStatusRequest request) {
+        rentalItemRepository.findById(id).ifPresent(item -> {
+            item.setStatus(request.getStatus());
+        });
+
+        return rentalItemRepository.findById(id).get().getStatus();
     }
 }
