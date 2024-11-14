@@ -1,9 +1,6 @@
 package com.rental.camp.admin.service;
 
-import com.rental.camp.admin.dto.AuditRequest;
-import com.rental.camp.admin.dto.AuditResponse;
-import com.rental.camp.admin.dto.DashboardStatusResponse;
-import com.rental.camp.admin.dto.UpdateStatusRequest;
+import com.rental.camp.admin.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.model.type.RentalStatus;
@@ -70,5 +67,9 @@ public class AdminService {
                 .overdueItems(rentalItemRepository.countByRentalStatus(RentalStatus.OVERDUE))
                 .monthDataList(monthDataList)
                 .build();
+    }
+
+    public Page<RentalStatusResponse> getRentalList(RentalStatus rentalStatus, int page, int size) {
+        return rentalItemRepository.findItemsByRentalStatus(rentalStatus, PageRequest.of(page, size));
     }
 }

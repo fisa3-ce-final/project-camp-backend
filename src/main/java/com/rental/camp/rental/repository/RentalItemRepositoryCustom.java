@@ -1,5 +1,6 @@
 package com.rental.camp.rental.repository;
 
+import com.rental.camp.admin.dto.RentalStatusResponse;
 import com.rental.camp.rental.dto.MyItemsResponse;
 import com.rental.camp.rental.dto.MyOrdersResponse;
 import com.rental.camp.rental.dto.MyRentalItemsResponse;
@@ -21,4 +22,5 @@ public interface RentalItemRepositoryCustom {
     Integer countByRentalItemStatus(RentalItemStatus status);
     Integer countByRentalStatus(RentalStatus status);
     Integer countByMonth(int month);
+    Page<RentalStatusResponse> findItemsByRentalStatus(RentalStatus status, Pageable pageable);
 }

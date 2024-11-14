@@ -1,7 +1,9 @@
 package com.rental.camp.rental.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.rental.camp.admin.dto.RentalStatusResponse;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
 import com.rental.camp.rental.dto.MyItemsResponse;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.method.P;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -227,7 +230,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         Long rentalNum = jpaQueryFactory.select(order.count())
                 .from(order)
-                .where(order.rentalStatus.eq(String.valueOf(status)))
+                .where(order.rentalStatus.eq(status))
                 .fetchOne();
 
         return rentalNum.intValue();
@@ -243,5 +246,43 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .fetchOne();
 
         return userNum.intValue();
+    }
+
+    @Override
+    public Page<RentalStatusResponse> findItemsByRentalStatus(RentalStatus status, Pageable pageable) {
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+        QOrder order = QOrder.order;
+        QOrderItem orderItem = QOrderItem.orderItem;
+        QUser user = QUser.user;
+
+        BooleanExpression statusCondition = status.equals(RentalStatus.ALL) ? null : order.rentalStatus.eq(status);
+
+        List<RentalStatusResponse> rentalItemList = jpaQueryFactory.select(Projections.constructor(
+                    RentalStatusResponse.class,
+                    rentalItem.id,
+                    order.userId,
+                    user.username,
+                    rentalItem.name,
+                    rentalItem.category,
+                    order.rentalDate,
+                    order.returnDate,
+                    order.rentalStatus,
+                    order.totalAmount
+                ))
+                .from(order)
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
+                .join(user).on(order.userId.eq(user.id))
+                .where(statusCondition)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = Optional.ofNullable(jpaQueryFactory.select(order.count())
+                .from(order)
+                .where(statusCondition)
+                .fetchOne()).orElse(0L);
+
+        return new PageImpl<>(rentalItemList, pageable, total);
     }
 }
