@@ -17,11 +17,5 @@ public class RentalItemCreateRequest {
     private BigDecimal price;
     private Integer stock;
     private String category;
-    private List<ImageDto> images;
-
-    @Data
-    public static class ImageDto {
-        private String imageUrl; // TODO: MultipartFile 변경 필요
-        private Integer imageOrder;
-    }
+    private List<MultipartFile> images;
 }

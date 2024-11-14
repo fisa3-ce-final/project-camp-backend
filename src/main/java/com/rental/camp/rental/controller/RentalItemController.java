@@ -1,6 +1,13 @@
 package com.rental.camp.rental.controller;
 
-import com.rental.camp.rental.dto.*;
+import com.rental.camp.rental.dto.MyItemsResponse;
+import com.rental.camp.rental.dto.MyOrdersResponse;
+import com.rental.camp.rental.dto.MyPageRequest;
+import com.rental.camp.rental.dto.MyRentalItemsResponse;
+import com.rental.camp.rental.dto.RentalItemCreateRequest;
+import com.rental.camp.rental.dto.RentalItemDetailResponse;
+import com.rental.camp.rental.dto.RentalItemRequest;
+import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.service.RentalItemService;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +15,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RequestMapping("/rental-items")
@@ -36,7 +49,7 @@ public class RentalItemController {
     }
 
     @PostMapping
-    public ResponseEntity<String> createRentalItem(@RequestBody RentalItemCreateRequest rentalItemCreateRequest,
+    public ResponseEntity<String> createRentalItem(@ModelAttribute RentalItemCreateRequest rentalItemCreateRequest,
                                                    JwtAuthenticationToken principal) {
         String uuid = principal.getName();
 
