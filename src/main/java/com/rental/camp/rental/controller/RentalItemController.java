@@ -31,7 +31,7 @@ public class RentalItemController {
 
     @GetMapping("/category/{type}")
     public Page<RentalItemResponse> getRentalItems(@PathVariable(name = "type") String type,
-                                                   @RequestBody RentalItemRequest requestDto) {
+                                                   @ModelAttribute RentalItemRequest requestDto) {
         RentalItemCategory rentalItemCategory;
 
         try {
@@ -63,19 +63,19 @@ public class RentalItemController {
     }
 
     @GetMapping("/my-rental-items")
-    public Page<MyRentalItemsResponse> getMyRentalItems(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+    public Page<MyRentalItemsResponse> getMyRentalItems(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         return rentalItemService.getMyRentalItems(uuid, pageRequest);
     }
 
     @GetMapping("/my-items")
-    public Page<MyItemsResponse> getMyItems(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+    public Page<MyItemsResponse> getMyItems(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         return rentalItemService.getMyItems(uuid, pageRequest);
     }
 
     @GetMapping("/my-orders")
-    public Page<MyOrdersResponse> getMyOrders(@RequestBody MyPageRequest pageRequest, JwtAuthenticationToken principal) {
+    public Page<MyOrdersResponse> getMyOrders(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         return rentalItemService.getMyOrders(uuid, pageRequest);
     }
