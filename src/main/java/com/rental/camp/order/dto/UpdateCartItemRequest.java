@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateCartItemRequest {
-    private Long userId;
     private Long cartItemId;
     @Min(value = 1, message = "수량은 1 이상이어야 합니다.")
     private Integer quantity;

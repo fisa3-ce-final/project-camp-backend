@@ -4,11 +4,13 @@ import com.rental.camp.coupon.dto.Coupon;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.order.dto.*;
 import com.rental.camp.order.repository.CartItemRepository;
+import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -16,29 +18,34 @@ import java.util.List;
 public class CartItemService {
     private final CartItemRepository cartItemRepository;
     private final CouponRepository couponRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public CartItemResponse addCartItem(CartItemRequest requestDto) {
-        if (cartItemRepository.existsByUserIdAndRentalItemId(requestDto.getUserId(), requestDto.getRentalItemId())) {
+    public CartItemResponse addCartItem(String uuid, CartItemRequest requestDto) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+
+
+        if (cartItemRepository.existsByUserIdAndRentalItemId(userId, requestDto.getRentalItemId())) {
             throw new IllegalArgumentException("이미 장바구니에 담긴 아이템입니다.");
         }
 
         com.rental.camp.order.model.CartItem cartItem = new com.rental.camp.order.model.CartItem();
-        cartItem.setUserId(requestDto.getUserId());
+        cartItem.setUserId(userId);
         cartItem.setRentalItemId(requestDto.getRentalItemId());
 
         cartItemRepository.save(cartItem);
 
         CartItemResponse responseDto = new CartItemResponse();
-        responseDto.setId(requestDto.getUserId());
+        responseDto.setId(userId);
         return responseDto;
     }
 
     @Transactional
-    public UpdateCartItemResponse updateCartItemQuantity(UpdateCartItemRequest request) {
+    public UpdateCartItemResponse updateCartItemQuantity(String uuid, UpdateCartItemRequest request) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         CartItemResponse cartItem = cartItemRepository.findCartItemWithRentalInfo(
                 request.getCartItemId(),
-                request.getUserId()
+                userId
         );
 
         if (cartItem == null) {
@@ -57,7 +64,7 @@ public class CartItemService {
 
         boolean updated = cartItemRepository.updateCartItemQuantity(
                 request.getCartItemId(),
-                request.getUserId(),
+                userId,
                 request.getQuantity()
         );
 
@@ -67,13 +74,14 @@ public class CartItemService {
 
         CartItemResponse updatedCartItem = cartItemRepository.findCartItemWithRentalInfo(
                 request.getCartItemId(),
-                request.getUserId()
+                userId
         );
 
         return new UpdateCartItemResponse(updatedCartItem, "수량이 성공적으로 변경되었습니다.");
     }
 
-    public CartItemListResponse getCartItemsByUserId(Long userId) {
+    public CartItemListResponse getCartItemsByUserId(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         List<CartItemResponse> cartItems = cartItemRepository.findCartItemsWithRentalInfoByUserId(userId);
         List<Coupon> coupons = couponRepository.findCouponsByUserId(userId);
 

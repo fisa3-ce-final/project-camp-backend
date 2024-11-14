@@ -15,6 +15,7 @@ import com.rental.camp.rental.model.QRentalItem;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.user.model.QUser;
 import com.rental.camp.user.model.User;
+import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final CartItemRepository cartItemRepository;
+    private final UserRepository userRepository;
 
 
     private BooleanExpression existsOrderItemForCartItem(QOrderItem qOrderItem, OrderRequest request) {
@@ -81,15 +84,16 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     }
 
     @Override
-    public Optional<Order> findPendingOrderByUserAndItem(OrderRequest request) {
+    public Optional<Order> findPendingOrderByUserAndItem(String uuid, OrderRequest request) {
         QOrder qOrder = QOrder.order;
         QOrderItem qOrderItem = QOrderItem.orderItem;
 
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         return Optional.ofNullable(
                 queryFactory
                         .selectFrom(qOrder)
                         .where(
-                                qOrder.userId.eq(request.getUserId())
+                                qOrder.userId.eq(userId)
                                         .and(qOrder.orderStatus.eq(OrderStatus.PENDING))
                                         .and(existsOrderItemForCartItem(qOrderItem, request))
                         )

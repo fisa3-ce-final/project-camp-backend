@@ -30,6 +30,7 @@ public class CartItem {
     @Column(name = "id", updatable = false)
     private Long id;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer quantity = 1;
 
@@ -38,6 +39,7 @@ public class CartItem {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isDeleted = false;
 

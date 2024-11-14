@@ -27,8 +27,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,9 +48,11 @@ public class OrderService {
     private final UserRepository userRepository;
 
 
+    // PENDING 상태 주문 생성
     @Transactional
-    public OrderResponse createOrder(OrderRequest requestDTO) {
-        Order order = orderRepository.save(createInitialOrder(requestDTO));
+    public OrderResponse createOrder(String uuid, OrderRequest requestDTO) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        Order order = orderRepository.save(createInitialOrder(uuid, requestDTO));
         List<CartItem> cartItems = cartItemRepository.findAllById(requestDTO.getCartItemIds());
 
         Map<Long, RentalItem> rentalItemMap = orderRepository.findRentalItemsByIds(
@@ -62,8 +66,8 @@ public class OrderService {
 
         processCouponAndUpdateTotal(order, requestDTO.getUserCouponId(), totalItemPrice);
 
-        User user = orderRepository.findUserById(requestDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + requestDTO.getUserId()));
+        User user = orderRepository.findUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + userId));
 
         List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
@@ -140,8 +144,9 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse completeOrder(OrderRequest request) {
-        Order existingOrder = orderRepository.findPendingOrderByUserAndItem(request)
+    public OrderResponse completeOrder(String uuid, OrderRequest request) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        Order existingOrder = orderRepository.findPendingOrderByUserAndItem(uuid, request)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
 
         orderRepository.updateOrderStatus(existingOrder.getId(), OrderStatus.COMPLETED);
@@ -232,7 +237,8 @@ public class OrderService {
     }
 
 
-    public OrderResponse getOrderDetails(Long orderId, Long userId) {
+    public OrderResponse getOrderDetails(String uuid, Long orderId) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         Order order = orderRepository.findOrderByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
 
@@ -246,7 +252,8 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse cancelOrder(Long orderId, Long userId) {
+    public OrderResponse cancelOrder(String uuid, Long orderId) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         Order order = orderRepository.findCancellableOrder(orderId, userId)
                 .orElseThrow(() -> new RuntimeException("취소할 수 없는 주문입니다."));
 
@@ -261,6 +268,7 @@ public class OrderService {
     }
 
 
+    @Transactional
     private BigDecimal createOrderItems(Order order, List<CartItem> cartItems,
                                         Map<Long, RentalItem> rentalItemMap, long rentalDays) {
         BigDecimal totalItemPrice = BigDecimal.ZERO;
@@ -279,6 +287,7 @@ public class OrderService {
         return totalItemPrice;
     }
 
+    @Transactional
     private void processCouponAndUpdateTotal(Order order, Long couponId, BigDecimal totalItemPrice) {
         BigDecimal finalPrice = totalItemPrice;
 
@@ -292,9 +301,10 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    private Order createInitialOrder(OrderRequest requestDTO) {
+    private Order createInitialOrder(String uuid, OrderRequest requestDTO) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         Order order = new Order();
-        order.setUserId(requestDTO.getUserId());
+        order.setUserId(userId);
         order.setOrderStatus(OrderStatus.PENDING);
         order.setRentalDate(requestDTO.getRentalDate());
         order.setReturnDate(requestDTO.getReturnDate());
@@ -302,6 +312,7 @@ public class OrderService {
         return order;
     }
 
+    @Transactional
     private void restoreUserCoupon(Order order) {
         if (order.getCouponId() != null) {
             UserCoupon userCoupon = userCouponRepository.findByCouponIdAndUserId(order.getCouponId(), order.getUserId())
@@ -312,12 +323,22 @@ public class OrderService {
         }
     }
 
+    @Transactional
     private void restoreRentalItemsStock(List<OrderItemInfo> orderItems) {
+        // rentalItemId를 키로 하고, 수량을 값으로 하는 맵 생성
+        Map<Long, Integer> rentalItemQuantities = new HashMap<>();
         for (OrderItemInfo orderItem : orderItems) {
-            RentalItem rentalItem = rentalItemRepository.findById(orderItem.getRentalItemId())
-                    .orElseThrow(() -> new RuntimeException("RentalItem을 찾을 수 없습니다. ID: " + orderItem.getRentalItemId()));
+            rentalItemQuantities.merge(orderItem.getRentalItemId(), orderItem.getQuantity(), Integer::sum);
+        }
 
-            rentalItem.setStock(rentalItem.getStock() + orderItem.getQuantity());
+        // 그룹화된 데이터를 기반으로 재고 복원
+        for (Map.Entry<Long, Integer> entry : rentalItemQuantities.entrySet()) {
+            Long rentalItemId = entry.getKey();
+            Integer totalQuantity = entry.getValue();
+            RentalItem rentalItem = rentalItemRepository.findById(rentalItemId)
+                    .orElseThrow(() -> new RuntimeException("RentalItem을 찾을 수 없습니다. ID: " + rentalItemId));
+
+            rentalItem.setStock(rentalItem.getStock() + totalQuantity);
             rentalItemRepository.save(rentalItem);
         }
     }

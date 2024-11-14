@@ -86,32 +86,4 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 .fetch();
     }
 
-//    @Override
-//    public List<CartItem> findAllByIdAndUserId(List<Long> cartItemIds, Long userId) {
-//        return queryFactory
-//                .select(Projections.constructor(CartItem.class,
-//                        cartItem.id,
-//                        cartItem.userId,
-//                        cartItem.rentalItemId,
-//                        cartItem.quantity
-//                ))
-//                .from(cartItem)
-//                .where(
-//                        cartItem.id.in(cartItemIds)
-//                                .and(cartItem.userId.eq(userId))
-//                )
-//                .fetch();
-//    }
 }
-
-//    @Override
-//    public List<BigDecimal> findRentalItemPricesByCartItemIds(List<Long> cartItemIds) {
-//        QCartItem cartItem = QCartItem.cartItem;
-//        QRentalItem rentalItem = QRentalItem.rentalItem;
-//
-//        return queryFactory.select(rentalItem.price)
-//                .from(cartItem)
-//                .join(rentalItem).on(cartItem.rentalItemId.eq(rentalItem.id)) // rentalItemId를 기준으로 조인
-//                .where(cartItem.id.in(cartItemIds))
-//                .fetch();
-//    }
