@@ -33,7 +33,6 @@ public class Order {
     @Column(name = "id", updatable = false)
     private Long id;
 
-    // 기본 값 설정을 제거하여 EnumType.STRING으로 매핑된 Enum 필드로 설정
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false, length = 50)
     private OrderStatus orderStatus = OrderStatus.PENDING;

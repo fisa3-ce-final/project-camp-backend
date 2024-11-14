@@ -10,6 +10,5 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemRequest {
-    private Long userId;
     private Long rentalItemId;
 }
