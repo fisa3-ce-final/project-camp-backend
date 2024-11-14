@@ -1,6 +1,7 @@
 package com.rental.camp.order.model;
 
 import com.rental.camp.order.model.type.OrderStatus;
+import com.rental.camp.rental.model.type.RentalStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,8 +49,9 @@ public class Order {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false, length = 50)
-    private String rentalStatus = "returned";
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rental_status", nullable = false, length = 50)
+    private RentalStatus rentalStatus = RentalStatus.RENTED;
 
     @Column(nullable = false)
     private LocalDateTime rentalDate;
