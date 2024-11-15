@@ -2,8 +2,11 @@ package com.rental.camp.rental.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.admin.dto.RentalStatusResponse;
+import com.rental.camp.community.model.QCommunityPost;
 import com.rental.camp.order.model.QOrder;
 import com.rental.camp.order.model.QOrderItem;
 import com.rental.camp.rental.dto.MyItemsResponse;
@@ -21,9 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.method.P;
 import org.springframework.stereotype.Repository;
 
+import java.io.Console;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,10 +64,16 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     public RentalItemDetailResponse findItemDetailById(Long id) {
         QRentalItem rentalItem = QRentalItem.rentalItem;
         QRentalItemImage rentalItemImage = QRentalItemImage.rentalItemImage;
+        QUser user = QUser.user;
+        QCommunityPost communityPost = QCommunityPost.communityPost;
+        System.out.println(rentalItem.id);
 
         // 상품 기본 정보 조회
         RentalItemDetailResponse itemDetail = jpaQueryFactory
                 .select(Projections.fields(RentalItemDetailResponse.class,
+                        rentalItem.userId,
+                        user.username,
+                        user.imageUrl,
                         rentalItem.id,
                         rentalItem.name,
                         rentalItem.description,
@@ -74,9 +83,17 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                         rentalItem.status,
                         rentalItem.viewCount,
                         rentalItem.ratingAvg,
-                        rentalItem.createdAt
+                        rentalItem.createdAt,
+
+                        // 후기글 개수 추가
+                        Expressions.asNumber(
+                                JPAExpressions.select(communityPost.count())
+                                        .from(communityPost)
+                                        .where(communityPost.rentalItemId.eq(rentalItem.id))
+                        ).intValue().as("reviewNum")
                 ))
                 .from(rentalItem)
+                .join(user).on(rentalItem.userId.eq(user.id))
                 .where(rentalItem.id.eq(id)
                         .and(rentalItem.isDeleted.isFalse()))
                 .fetchOne();

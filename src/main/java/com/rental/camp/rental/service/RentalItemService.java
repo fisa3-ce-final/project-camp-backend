@@ -5,19 +5,19 @@ import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
 import com.rental.camp.rental.model.type.RentalItemCategory;
-import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.repository.RentalItemImageRepository;
 import com.rental.camp.rental.repository.RentalItemRepository;
+import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,13 +42,19 @@ public class RentalItemService {
 
         return rentalItems.map(item -> {
             RentalItemResponse responseDto = new RentalItemResponse();
+            Long userId = item.getUserId();
+            Optional<User> user = userRepository.findById(userId);
 
-            responseDto.setId(item.getId());
-            responseDto.setName(item.getName());
+            responseDto.setUserId(item.getUserId());
+            responseDto.setUsername(user.get().getUsername());
+            responseDto.setUserImageUrl(user.get().getImageUrl());
+            responseDto.setRentalId(item.getId());
+            responseDto.setRentalItemName(item.getName());
             responseDto.setPrice(item.getPrice());
             responseDto.setStock(item.getStock());
             responseDto.setCategory(item.getCategory());
             responseDto.setStatus(item.getStatus());
+            responseDto.setRatingAvg(item.getRatingAvg());
 
             return responseDto;
         });
