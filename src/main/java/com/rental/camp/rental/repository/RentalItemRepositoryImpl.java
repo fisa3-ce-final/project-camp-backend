@@ -41,16 +41,17 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
         BooleanBuilder whereClause = new BooleanBuilder();
-        whereClause.and(rentalItem.status.eq(RentalItemStatus.AVAILABLE))
-                .and(rentalItem.isDeleted.isFalse());
+        whereClause.and(rentalItem.status.eq(RentalItemStatus.AVAILABLE));
 
         // category가 ALL이 아니면 추가 필터링
-        if (!category.equals(RentalItemCategory.ALL)) {
+        if (category != RentalItemCategory.ALL) {
             whereClause.and(rentalItem.category.eq(category));
         }
 
-        List<RentalItem> items = jpaQueryFactory.selectFrom(rentalItem)
+        List<RentalItem> items = jpaQueryFactory.select(rentalItem)
+                .from(rentalItem)
                 .where(whereClause)
+                .orderBy(rentalItem.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -71,13 +72,12 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         QRentalItemImage rentalItemImage = QRentalItemImage.rentalItemImage;
         QUser user = QUser.user;
         QCommunityPost communityPost = QCommunityPost.communityPost;
-        System.out.println(rentalItem.id);
 
         // 상품 기본 정보 조회
         RentalItemDetailResponse itemDetail = jpaQueryFactory
                 .select(Projections.fields(RentalItemDetailResponse.class,
                         user.uuid,
-                        user.username,
+                        user.nickname,
                         user.imageUrl,
                         rentalItem.id,
                         rentalItem.name,
@@ -122,6 +122,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 })
                 .collect(Collectors.toList());
 
+        itemDetail.setRentalItemId(id);
         itemDetail.setImage(itemDetailImages);
 
         return itemDetail;
