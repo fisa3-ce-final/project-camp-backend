@@ -2,6 +2,7 @@
 package com.rental.camp.coupon.repository;
 
 import com.rental.camp.coupon.dto.CouponResponse;
+import com.rental.camp.coupon.model.Coupon;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,4 +13,6 @@ public interface CouponRepositoryCustom {
 
 
     public Page<CouponResponse> findCouponsByUserId(Long userId, Pageable pageable);
+
+    Page<Coupon> findAllCoupon(Pageable pageable);
 }

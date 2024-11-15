@@ -21,13 +21,39 @@ public class CouponResponse {
     private CouponType type;
     private LocalDateTime expiryDate;
     private boolean isUsed;
-    
+    private LocalDateTime createdAt;
 
-    public CouponResponse(Long couponId, String name, BigDecimal discount, CouponType type, LocalDateTime expiryDate) {
+    // QueryDSL을 위한 생성자
+    public CouponResponse(Long couponId, String name, BigDecimal discount,
+                          CouponType type, LocalDateTime expiryDate) {
         this.couponId = couponId;
         this.name = name;
         this.discount = discount;
         this.type = type;
         this.expiryDate = expiryDate;
+        this.isUsed = false; // 기본값 설정
+    }
+
+    public CouponResponse(Long couponId, String name, BigDecimal discount,
+                          CouponType type, LocalDateTime expiryDate,
+                          Boolean isUsed) {
+        this.couponId = couponId;
+        this.name = name;
+        this.discount = discount;
+        this.type = type;
+        this.expiryDate = expiryDate;
+        this.isUsed = isUsed != null ? isUsed : false;
+    }
+
+    public CouponResponse(Long couponId, String name, BigDecimal discount,
+                          CouponType type, LocalDateTime expiryDate,
+                          Boolean isUsed, LocalDateTime createdAt) {
+        this.couponId = couponId;
+        this.name = name;
+        this.discount = discount;
+        this.type = type;
+        this.expiryDate = expiryDate;
+        this.isUsed = isUsed != null ? isUsed : false;
+        this.createdAt = createdAt;
     }
 }
