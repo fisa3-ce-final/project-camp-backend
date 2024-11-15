@@ -24,4 +24,15 @@ public class RentalItemResponse {
     private RentalItemCategory category;
     private RentalItemStatus status;
     private BigDecimal ratingAvg;
+
+    public RentalItemResponse(Long rentalId, String rentalItemName,
+                              BigDecimal price, Integer stock,
+                              RentalItemCategory category, RentalItemStatus status) {
+        this.rentalId = rentalId;
+        this.rentalItemName = rentalItemName;
+        this.price = price;
+        this.stock = stock;
+        this.category = category;
+        this.status = status;
+    }
 }

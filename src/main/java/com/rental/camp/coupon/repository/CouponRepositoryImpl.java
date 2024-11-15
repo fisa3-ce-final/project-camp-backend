@@ -4,6 +4,7 @@ package com.rental.camp.coupon.repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.coupon.dto.CouponResponse;
+import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.QCoupon;
 import com.rental.camp.coupon.model.QUserCoupon;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +71,8 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
                         coupon.name,
                         coupon.discount,
                         coupon.type,
-                        coupon.expiryDate))
+                        coupon.expiryDate
+                ))
                 .from(coupon)
                 .innerJoin(userCoupon)
                 .on(
@@ -83,5 +85,26 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
                                 .and(coupon.expiryDate.after(LocalDateTime.now()))
                 )
                 .fetch();
+    }
+
+    @Override
+    public Page<Coupon> findAllCoupon(Pageable pageable) {
+        QCoupon coupon = QCoupon.coupon;
+
+        List<Coupon> coupons = queryFactory
+                .selectFrom(coupon)
+                .where(coupon.isDeleted.eq(false))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(coupon.createdAt.desc())
+                .fetch();
+
+        Long total = queryFactory
+                .select(coupon.count())
+                .from(coupon)
+                .where(coupon.isDeleted.eq(false))
+                .fetchOne();
+
+        return new PageImpl<>(coupons, pageable, total != null ? total : 0L);
     }
 }
