@@ -9,12 +9,13 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class RentalItemDetailResponse {
-    private Long userId;
+    private UUID uuid;
     private String username;
     private String userImageUrl;
     private Long rentalItemId;

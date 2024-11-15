@@ -14,8 +14,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class RentalItemResponse {
-    private Long userId;
-    private String username;
+    private String nickname;
     private String userImageUrl;
     private Long rentalId;
     private String rentalItemName;
