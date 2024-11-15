@@ -1,5 +1,6 @@
 package com.rental.camp.rental.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -26,7 +27,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.io.Console;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,10 +40,17 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     public Page<RentalItem> findAvailableItemsByType(RentalItemCategory category, Pageable pageable) {
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
+        BooleanBuilder whereClause = new BooleanBuilder();
+        whereClause.and(rentalItem.status.eq(RentalItemStatus.AVAILABLE))
+                .and(rentalItem.isDeleted.isFalse());
+
+        // category가 ALL이 아니면 추가 필터링
+        if (!category.equals(RentalItemCategory.ALL)) {
+            whereClause.and(rentalItem.category.eq(category));
+        }
+
         List<RentalItem> items = jpaQueryFactory.selectFrom(rentalItem)
-                .where(rentalItem.status.eq(RentalItemStatus.AVAILABLE)
-                        .and(rentalItem.category.eq(category))
-                        .and(rentalItem.isDeleted.isFalse()))
+                .where(whereClause)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -51,9 +58,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         // 전체 데이터 개수
         long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
                 .from(rentalItem)
-                .where(rentalItem.status.eq(RentalItemStatus.AVAILABLE)
-                        .and(rentalItem.category.eq(category))
-                        .and(rentalItem.isDeleted.isFalse()))
+                .where(whereClause)
                 .fetchOne()).orElse(0L); // null일 경우 0으로 처리
 
         // PageImpl로 페이징된 결과 반환
@@ -71,7 +76,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
         // 상품 기본 정보 조회
         RentalItemDetailResponse itemDetail = jpaQueryFactory
                 .select(Projections.fields(RentalItemDetailResponse.class,
-                        rentalItem.userId,
+                        user.uuid,
                         user.username,
                         user.imageUrl,
                         rentalItem.id,

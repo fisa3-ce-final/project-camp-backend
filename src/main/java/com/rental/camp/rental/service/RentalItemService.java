@@ -45,8 +45,7 @@ public class RentalItemService {
             Long userId = item.getUserId();
             Optional<User> user = userRepository.findById(userId);
 
-            responseDto.setUserId(item.getUserId());
-            responseDto.setUsername(user.get().getUsername());
+            responseDto.setNickname(user.get().getNickname());
             responseDto.setUserImageUrl(user.get().getImageUrl());
             responseDto.setRentalId(item.getId());
             responseDto.setRentalItemName(item.getName());
