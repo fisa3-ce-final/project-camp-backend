@@ -14,7 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class RentalItemDetailResponse {
-    private Long id;
+    private Long userId;
+    private String username;
+    private String userImageUrl;
+    private Long rentalItemId;
     private String name;
     private String description;
     private BigDecimal price;
@@ -23,6 +26,7 @@ public class RentalItemDetailResponse {
     private RentalItemStatus status;
     private Integer viewCount;
     private BigDecimal ratingAvg;
+    private Integer reviewNum;
     private LocalDateTime createdAt;
     private List<ImageDto> image;
 

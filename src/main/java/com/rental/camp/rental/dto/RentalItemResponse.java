@@ -14,10 +14,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class RentalItemResponse {
-    private Long id;
-    private String name;
+    private Long userId;
+    private String username;
+    private String userImageUrl;
+    private Long rentalId;
+    private String rentalItemName;
     private BigDecimal price;
     private Integer stock;
     private RentalItemCategory category;
     private RentalItemStatus status;
+    private BigDecimal ratingAvg;
 }

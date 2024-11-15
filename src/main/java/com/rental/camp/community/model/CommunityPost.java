@@ -63,6 +63,9 @@ public class CommunityPost {
     @Column(nullable = false)
     private Boolean isDeleted;
 
+    @Column(name = "rental_item_id")
+    private Long rentalItemId;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 }
