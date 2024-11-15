@@ -98,7 +98,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                         ).intValue().as("reviewNum")
                 ))
                 .from(rentalItem)
-                .join(user).on(rentalItem.userId.eq(user.id))
+                .join(user).on(user.id.eq(rentalItem.userId))
                 .where(rentalItem.id.eq(id)
                         .and(rentalItem.isDeleted.isFalse()))
                 .fetchOne();
@@ -122,7 +122,6 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 })
                 .collect(Collectors.toList());
 
-        itemDetail.setRentalItemId(id);
         itemDetail.setImage(itemDetailImages);
 
         return itemDetail;

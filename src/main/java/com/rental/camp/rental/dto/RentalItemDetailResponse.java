@@ -17,8 +17,8 @@ import java.util.UUID;
 public class RentalItemDetailResponse {
     private UUID uuid;
     private String nickname;
-    private String userImageUrl;
-    private Long rentalItemId;
+    private String imageUrl;
+    private Long id;
     private String name;
     private String description;
     private BigDecimal price;
