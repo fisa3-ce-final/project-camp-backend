@@ -30,15 +30,7 @@ public class RentalItemService {
     private final S3Client s3Client;
 
     public Page<RentalItemResponse> getRentalItems(RentalItemCategory category, RentalItemRequest requestDto) {
-        Page<RentalItem> rentalItems;
-
-        if (category == RentalItemCategory.ALL) {
-            // 모든 카테고리의 아이템을 조회
-            rentalItems = rentalItemRepository.findAll(PageRequest.of(requestDto.getPage(), requestDto.getSize()));
-        } else {
-            // 특정 카테고리의 아이템을 조회
-            rentalItems = rentalItemRepository.findAvailableItemsByType(category, PageRequest.of(requestDto.getPage(), requestDto.getSize()));
-        }
+        Page<RentalItem> rentalItems = rentalItemRepository.findAvailableItemsByType(category, PageRequest.of(requestDto.getPage(), requestDto.getSize()));
 
         return rentalItems.map(item -> {
             RentalItemResponse responseDto = new RentalItemResponse();
