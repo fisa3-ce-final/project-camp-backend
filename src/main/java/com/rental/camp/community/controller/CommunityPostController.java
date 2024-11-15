@@ -5,7 +5,11 @@ import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
 import com.rental.camp.community.service.CommunityPostService;
-
+import com.rental.camp.coupon.dto.CouponResponse;
+import com.rental.camp.coupon.service.CouponService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,14 +19,16 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/community")
 public class CommunityPostController {
 
     private final CommunityPostService postService;
+    private final CouponService couponService;
 
-    public CommunityPostController(CommunityPostService postService) {
-        this.postService = postService;
-    }
+//    public CommunityPostController(CommunityPostService postService) {
+//        this.postService = postService;
+//    }
 
     @PostMapping
     public ResponseEntity<CommunityPostResponseDto> createPost(@ModelAttribute CommunityPostRequestDto requestDto) throws Exception {
@@ -87,5 +93,12 @@ public class CommunityPostController {
     public ResponseEntity<List<CommunityPostResponseDto>> searchPosts(@PathVariable("searchParam") String searchParam) {
         List<CommunityPostResponseDto> searchResults = postService.searchPosts(searchParam);
         return ResponseEntity.ok(searchResults);
+    }
+
+
+    @GetMapping("/coupon")
+    public ResponseEntity<Page<CouponResponse>> getActiveCoupons(Pageable pageable) {
+        Page<CouponResponse> coupons = couponService.getAllActiveCoupons(pageable);
+        return ResponseEntity.ok(coupons);
     }
 }
