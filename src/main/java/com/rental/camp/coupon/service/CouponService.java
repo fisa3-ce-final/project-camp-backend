@@ -25,6 +25,23 @@ public class CouponService {
     private final UserCouponRepository userCouponRepository;
 
 
+    public Page<CouponResponse> getAllActiveCoupons(Pageable pageable) {
+        LocalDateTime now = LocalDateTime.now();
+
+        Page<Coupon> coupons = couponRepository.findByIsDeletedFalseAndExpiryDateAfter(now, pageable);
+
+        // Coupon 엔티티를 CouponResponse로 변환
+        return coupons.map(coupon -> CouponResponse.builder()
+                .couponId(coupon.getId())
+                .name(coupon.getName())
+                .discount(coupon.getDiscount())
+                .type(coupon.getType())
+                .expiryDate(coupon.getExpiryDate())
+                .isUsed(false)
+                .createdAt(coupon.getCreatedAt())
+                .build());
+    }
+
     public Page<CouponResponse> getCouponList(String uuid, Pageable pageable) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         return couponRepository.findCouponsByUserId(userId, pageable);

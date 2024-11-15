@@ -38,4 +38,6 @@ public class CouponController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+
 }

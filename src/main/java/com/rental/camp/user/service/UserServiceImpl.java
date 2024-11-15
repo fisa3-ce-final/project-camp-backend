@@ -27,7 +27,9 @@ public class UserServiceImpl implements UserService {
     public void signIn(UserSigninRequest signinRequest, JwtAuthenticationToken principal) {
         UUID uuid = UUID.fromString(principal.getName());
         String email = principal.getTokenAttributes().get("email").toString();
-        String picture = principal.getTokenAttributes().get("picture").toString();
+        String picture = "";
+        if (principal.getTokenAttributes().get("picture") != null)
+            picture = principal.getTokenAttributes().get("picture").toString();
 
         User exsistingUser = userRepository.findByUuid(uuid);
         if (exsistingUser == null) {
