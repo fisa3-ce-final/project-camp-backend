@@ -42,10 +42,10 @@ public class CartItemController {
     }
 
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteCartItem(@RequestBody CartItem request) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteCartItem(@PathVariable(name = "id") Long id) {
         try {
-            cartItemService.deleteCartItem(request.getId());
+            cartItemService.deleteCartItem(id);
             return ResponseEntity.ok("삭제 완료");
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
