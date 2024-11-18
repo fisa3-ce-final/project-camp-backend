@@ -3,11 +3,16 @@ package com.rental.camp.order.repository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.dto.CartItemResponse;
+import com.rental.camp.order.model.QCartItem;
+import com.rental.camp.rental.dto.RentalItemForCartResponse;
 import com.rental.camp.rental.dto.RentalItemResponse;
+import com.rental.camp.rental.model.QRentalItem;
+import com.rental.camp.rental.model.QRentalItemImage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.rental.camp.order.model.QCartItem.cartItem;
 import static com.rental.camp.rental.model.QRentalItem.rentalItem;
@@ -67,11 +72,16 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 
     @Override
     public List<CartItemResponse> findCartItemsWithRentalInfoByUserId(Long userId) {
-        return queryFactory
+        QCartItem cartItem = QCartItem.cartItem;
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+        QRentalItemImage rentalItemImage = QRentalItemImage.rentalItemImage;
+
+        // 장바구니 아이템 기본 정보 조회
+        List<CartItemResponse> cartItems = queryFactory
                 .select(Projections.constructor(CartItemResponse.class,
                         cartItem.id,
                         cartItem.quantity,
-                        Projections.constructor(RentalItemResponse.class,
+                        Projections.constructor(RentalItemForCartResponse.class,
                                 rentalItem.id,
                                 rentalItem.name,
                                 rentalItem.price,
@@ -84,6 +94,27 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 .join(rentalItem).on(cartItem.rentalItemId.eq(rentalItem.id))
                 .where(cartItem.userId.eq(userId))
                 .fetch();
+
+        // 각 상품의 이미지 정보를 조회하여 매핑
+        for (CartItemResponse cartItemResponse : cartItems) {
+            List<RentalItemForCartResponse.ImageDto> itemImages = queryFactory
+                    .selectFrom(rentalItemImage)
+                    .where(rentalItemImage.rentalItemId.eq(cartItemResponse.getRentalItem().getId()))
+                    .orderBy(rentalItemImage.imageOrder.asc())
+                    .fetch()
+                    .stream()
+                    .map(image -> {
+                        RentalItemForCartResponse.ImageDto imageDto = new RentalItemForCartResponse.ImageDto();
+                        imageDto.setImageUrl(image.getImageUrl());
+                        imageDto.setImageOrder(image.getImageOrder());
+                        return imageDto;
+                    })
+                    .collect(Collectors.toList());
+
+            cartItemResponse.getRentalItem().setImage(itemImages);
+        }
+
+        return cartItems;
     }
 
 }
