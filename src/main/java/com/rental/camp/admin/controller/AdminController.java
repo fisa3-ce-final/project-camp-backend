@@ -16,24 +16,34 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
     private final AdminService adminService;
 
+    // 관리자 대시보드 전체 통계
     @GetMapping("/dashboard/status")
     public DashboardStatusResponse getDashboardStatus() {
         return adminService.getDashboardStatus();
     }
 
+    // 관리자 대여 이용 현황 목록 조회
     @GetMapping("/rentals/{status}")
     public Page<RentalStatusResponse> getRentalList(@PathVariable String status,
                                                     @RequestParam int page, @RequestParam int size) {
         return adminService.getRentalList(RentalStatus.valueOf(status.toUpperCase()), page, size);
     }
 
+    // 관리자 대여 이용 상태 수정
+    @PutMapping("/rentals/{id}")
+    public RentalStatus changeStatus(@PathVariable String id, @RequestBody RentalStatus status) {
+        return adminService.changeStatus(id, status);
+    }
+
+    // 관리자 승인 목록 조회
     @GetMapping("/rental-items")
-    public Page<AuditResponse> getAuditList(@RequestBody AuditRequest request) {
+    public Page<AuditResponse> getAuditList(@ModelAttribute AuditRequest request) {
         return adminService.getAuditList(request);
     }
 
+    // 관리자 승인 상태 수정
     @PutMapping("/rental-items/{id}")
-    public RentalItemStatus reviewAudit(@PathVariable Long id, @RequestBody UpdateStatusRequest request) {
+    public RentalItemStatus reviewAudit(@PathVariable Long id, @ModelAttribute UpdateStatusRequest request) {
         return adminService.reviewAudit(id, request);
     }
 }

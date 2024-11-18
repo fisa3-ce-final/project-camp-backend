@@ -220,15 +220,22 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     public Page<RentalItem> findItemsByStatus(RentalItemStatus status, Pageable pageable) {
         QRentalItem rentalItem = QRentalItem.rentalItem;
 
+        BooleanBuilder whereClause = new BooleanBuilder();
+
+        // category가 ALL이 아니면 추가 필터링
+        if (status != RentalItemStatus.ALL) {
+            whereClause.and(rentalItem.status.eq(status));
+        }
+
         List<RentalItem> rentalItems = jpaQueryFactory.selectFrom(rentalItem)
-                .where(rentalItem.status.eq(status))
+                .where(whereClause)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
                 .from(rentalItem)
-                .where(rentalItem.status.eq(status))
+                .where(whereClause)
                 .fetchOne()).orElse(0L);
 
         return new PageImpl<>(rentalItems, pageable, total);

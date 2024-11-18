@@ -1,6 +1,7 @@
 package com.rental.camp.admin.service;
 
 import com.rental.camp.admin.dto.*;
+import com.rental.camp.order.repository.OrderRepository;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.model.type.RentalStatus;
@@ -19,6 +20,7 @@ import java.util.stream.IntStream;
 @Service
 public class AdminService {
     private final RentalItemRepository rentalItemRepository;
+    private final OrderRepository orderRepository;
 
     public Page<AuditResponse> getAuditList(AuditRequest request) {
         Page<RentalItem> rentalItems;
@@ -71,5 +73,9 @@ public class AdminService {
 
     public Page<RentalStatusResponse> getRentalList(RentalStatus rentalStatus, int page, int size) {
         return rentalItemRepository.findItemsByRentalStatus(rentalStatus, PageRequest.of(page, size));
+    }
+
+    public RentalStatus changeStatus(String id, RentalStatus status) {
+        return RentalStatus.RETURNED;
     }
 }
