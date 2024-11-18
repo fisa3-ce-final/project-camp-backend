@@ -24,4 +24,5 @@ public class UserGetResponse {
     private String imageUrl;
     private String provider;
     private LocalDateTime createdAt;
+    private String role;
 }

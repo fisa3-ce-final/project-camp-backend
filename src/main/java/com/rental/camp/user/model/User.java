@@ -63,4 +63,6 @@ public class User {
     private LocalDateTime updatedAt;
 
     private Boolean isDeleted;
+
+    private String role;
 }

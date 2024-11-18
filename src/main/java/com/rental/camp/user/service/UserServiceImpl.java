@@ -9,6 +9,8 @@ import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,15 @@ public class UserServiceImpl implements UserService {
         if (principal.getTokenAttributes().get("picture") != null)
             picture = principal.getTokenAttributes().get("picture").toString();
 
+        String role = "";
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) authentication;
+        if (jwtAuthenticationToken.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            role = "ADMIN";
+        } else if (jwtAuthenticationToken.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+            role = "USER";
+        }
+
         User exsistingUser = userRepository.findByUuid(uuid);
         if (exsistingUser == null) {
             User newUser = User.builder()
@@ -42,6 +53,7 @@ public class UserServiceImpl implements UserService {
                     .provider(signinRequest.getProvider())
                     .imageUrl(picture)
                     .isDeleted(false)
+                    .role(role)
                     .build();
             userRepository.save(newUser);
         } else {
@@ -67,6 +79,7 @@ public class UserServiceImpl implements UserService {
                     .imageUrl(user.getImageUrl())
                     .provider(user.getProvider())
                     .createdAt(user.getCreatedAt())
+                    .role(user.getRole())
                     .build();
         }
 
