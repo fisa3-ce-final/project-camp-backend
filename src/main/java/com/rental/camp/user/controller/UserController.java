@@ -42,7 +42,7 @@ public class UserController {
 
         UserGetResponse userGetResponse = userService.getUser(principal.getName());
         if (userGetResponse == null) {
-            return ResponseEntity.ok(null);
+            return ResponseEntity.badRequest().body(null);
         }
 
         return ResponseEntity.ok(userGetResponse);
