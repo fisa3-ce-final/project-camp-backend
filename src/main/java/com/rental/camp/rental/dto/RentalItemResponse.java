@@ -17,6 +17,7 @@ public class RentalItemResponse {
     private String nickname;
     private String userImageUrl;
     private Long rentalId;
+    private String rentalImageUrl;
     private String rentalItemName;
     private BigDecimal price;
     private Integer stock;

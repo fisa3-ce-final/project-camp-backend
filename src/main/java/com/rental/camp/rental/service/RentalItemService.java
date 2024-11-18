@@ -37,9 +37,13 @@ public class RentalItemService {
             Long userId = item.getUserId();
             Optional<User> user = userRepository.findById(userId);
 
+            List<RentalItemImage> images = rentalItemImageRepository.findByRentalItemId(item.getId());
+            String rentalItemImageUrl = images.isEmpty() ? "이미지 없음" : images.get(0).getImageUrl();
+
             responseDto.setNickname(user.get().getNickname());
             responseDto.setUserImageUrl(user.get().getImageUrl());
             responseDto.setRentalId(item.getId());
+            responseDto.setRentalImageUrl(rentalItemImageUrl);
             responseDto.setRentalItemName(item.getName());
             responseDto.setPrice(item.getPrice());
             responseDto.setStock(item.getStock());
