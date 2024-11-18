@@ -36,7 +36,8 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
                         coupon.discount,
                         coupon.type,
                         coupon.expiryDate,
-                        userCoupon.isUsed))
+                        userCoupon.isUsed,
+                        coupon.createdAt))
                 .from(coupon)
                 .innerJoin(userCoupon)
                 .on(
@@ -71,7 +72,8 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
                         coupon.name,
                         coupon.discount,
                         coupon.type,
-                        coupon.expiryDate
+                        coupon.expiryDate,
+                        coupon.createdAt
                 ))
                 .from(coupon)
                 .innerJoin(userCoupon)

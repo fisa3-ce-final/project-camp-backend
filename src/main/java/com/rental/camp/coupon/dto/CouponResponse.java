@@ -56,4 +56,15 @@ public class CouponResponse {
         this.isUsed = isUsed != null ? isUsed : false;
         this.createdAt = createdAt;
     }
+
+    public CouponResponse(Long couponId, String name, BigDecimal discount,
+                          CouponType type, LocalDateTime expiryDate,
+                          LocalDateTime createdAt) {
+        this.couponId = couponId;
+        this.name = name;
+        this.discount = discount;
+        this.type = type;
+        this.expiryDate = expiryDate;
+        this.createdAt = createdAt;
+    }
 }
