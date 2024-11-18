@@ -52,9 +52,9 @@ public class CartItemService {
             return UpdateCartItemResponse.error("장바구니 아이템을 찾을 수 없습니다.");
         }
 
-        if (request.getQuantity() > cartItem.getRentalItem().getStock()) {
+        if (request.getQuantity() > cartItem.getRentalItemResponse().getStock()) {
             return UpdateCartItemResponse.error(
-                    "주문 가능한 수량을 초과하였습니다. 현재 재고: " + cartItem.getRentalItem().getStock()
+                    "주문 가능한 수량을 초과하였습니다. 현재 재고: " + cartItem.getRentalItemResponse().getStock()
             );
         }
 

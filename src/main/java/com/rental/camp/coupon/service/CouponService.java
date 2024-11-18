@@ -61,6 +61,9 @@ public class CouponService {
         if (coupon.getAmount() <= 0) {
             throw new IllegalStateException("쿠폰의 수량이 부족합니다.");
         }
+        if (userCouponRepository.findByCouponIdAndUserId(userId, couponId).isPresent()) {
+            throw new IllegalStateException("이미 발급받은 쿠폰입니다.");
+        }
 
         // amount 감소
         coupon.setAmount(coupon.getAmount() - 1);
