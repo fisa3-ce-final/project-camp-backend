@@ -9,5 +9,5 @@ import java.time.LocalDateTime;
 
 public interface CouponRepository extends JpaRepository<Coupon, Long>, CouponRepositoryCustom {
 
-    Page<Coupon> findByIsDeletedFalseAndExpiryDateAfter(LocalDateTime now, Pageable pageable);
+    Page<Coupon> findByIsDeletedFalseAndExpiryDateAfterOrderByCreatedAtDesc(LocalDateTime now, Pageable pageable);
 }

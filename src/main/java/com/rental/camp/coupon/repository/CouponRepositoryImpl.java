@@ -43,7 +43,8 @@ public class CouponRepositoryImpl implements CouponRepositoryCustom {
                 .on(
                         coupon.id.eq(userCoupon.couponId)
                                 .and(userCoupon.userId.eq(userId))
-                )
+                ).
+                orderBy(coupon.createdAt.desc())
                 .offset(pageable.getOffset())     // Pageable의 오프셋 설정
                 .limit(pageable.getPageSize())    // Pageable의 페이지 크기 설정
                 .fetch();
