@@ -23,13 +23,7 @@ public class AdminService {
     private final OrderRepository orderRepository;
 
     public Page<AuditResponse> getAuditList(AuditRequest request) {
-        Page<RentalItem> rentalItems;
-
-        if (request.getStatus() == RentalItemStatus.ALL) {
-            rentalItems = rentalItemRepository.findAll(PageRequest.of(request.getPage(), request.getSize()));
-        } else {
-            rentalItems = rentalItemRepository.findItemsByStatus(request.getStatus(), PageRequest.of(request.getPage(), request.getSize()));
-        }
+        Page<RentalItem> rentalItems = rentalItemRepository.findItemsByStatus(request.getStatus(), PageRequest.of(request.getPage(), request.getSize()));;
 
         return rentalItems.map(item -> {
             AuditResponse response = new AuditResponse();
