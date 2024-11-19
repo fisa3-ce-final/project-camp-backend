@@ -99,5 +99,12 @@ public class CartItemService {
         }
         cartItemRepository.deleteById(cartItemId);
     }
+
+    public Long getCartQuantity(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        return cartItemRepository.countByUserId(userId);
+
+    }
 }
+
 
