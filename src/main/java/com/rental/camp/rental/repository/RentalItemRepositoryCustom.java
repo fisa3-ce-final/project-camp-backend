@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 public interface RentalItemRepositoryCustom {
     Page<RentalItem> findAvailableItemsByType(RentalItemCategory category, Pageable pageable);
     RentalItemDetailResponse findItemDetailById(Long id);
+    Page<RentalItem> findItemsBySearchKeyword(String keyword, Pageable pageable);
     Page<MyRentalItemsResponse> findRentalItemsByUserId(Long userId, Pageable pageable);
     Page<MyItemsResponse> findItemsByUserId(Long userId, Pageable pageable);
     Page<MyOrdersResponse> findOrdersByUserId(Long userId, Pageable pageable);
