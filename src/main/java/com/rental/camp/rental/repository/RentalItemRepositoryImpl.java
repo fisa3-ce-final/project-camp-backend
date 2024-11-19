@@ -229,6 +229,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         List<RentalItem> rentalItems = jpaQueryFactory.selectFrom(rentalItem)
                 .where(whereClause)
+                .orderBy(rentalItem.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -303,6 +304,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
                 .join(user).on(order.userId.eq(user.id))
                 .where(statusCondition)
+                .orderBy(order.returnDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
