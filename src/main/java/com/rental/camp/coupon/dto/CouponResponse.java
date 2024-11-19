@@ -1,6 +1,7 @@
 // CouponDto.java
 package com.rental.camp.coupon.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rental.camp.coupon.model.type.CouponType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,10 +14,12 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
 public class CouponResponse {
     private Long couponId;
     private String name;
+    private Integer amount;
     private BigDecimal discount;
     private CouponType type;
     private LocalDateTime expiryDate;

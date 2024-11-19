@@ -34,11 +34,13 @@ public class CouponService {
         return coupons.map(coupon -> CouponResponse.builder()
                 .couponId(coupon.getId())
                 .name(coupon.getName())
+                .amount(coupon.getAmount())
                 .discount(coupon.getDiscount())
                 .type(coupon.getType())
                 .expiryDate(coupon.getExpiryDate())
                 .isUsed(false)
                 .createdAt(coupon.getCreatedAt())
+
                 .build());
     }
 
