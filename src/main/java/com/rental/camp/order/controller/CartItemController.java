@@ -57,4 +57,10 @@ public class CartItemController {
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    @GetMapping("/quantity")
+    public Long getCartQuantity(JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        return cartItemService.getCartQuantity(uuid);
+    }
 }
