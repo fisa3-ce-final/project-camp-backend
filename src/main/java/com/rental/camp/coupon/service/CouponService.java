@@ -28,7 +28,7 @@ public class CouponService {
     public Page<CouponResponse> getAllActiveCoupons(Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
 
-        Page<Coupon> coupons = couponRepository.findByIsDeletedFalseAndExpiryDateAfter(now, pageable);
+        Page<Coupon> coupons = couponRepository.findByIsDeletedFalseAndExpiryDateAfterOrderByCreatedAtDesc(now, pageable);
 
         // Coupon 엔티티를 CouponResponse로 변환
         return coupons.map(coupon -> CouponResponse.builder()
