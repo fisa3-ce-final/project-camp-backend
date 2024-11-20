@@ -166,6 +166,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 .join(orderItem).on(order.id.eq(orderItem.orderId))
                 .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
                 .where(order.userId.eq(userId))
+                .orderBy(order.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -194,6 +195,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                 ))
                 .from(rentalItem)
                 .where(rentalItem.userId.eq(userId))
+                .orderBy(rentalItem.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -209,21 +211,17 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     @Override
     public Page<MyOrdersResponse> findOrdersByUserId(Long userId, Pageable pageable) {
         QOrder order = QOrder.order;
-        QOrderItem orderItem = QOrderItem.orderItem;
-        QRentalItem rentalItem = QRentalItem.rentalItem;
 
         List<MyOrdersResponse> myOrders = jpaQueryFactory.select(Projections.constructor(
                     MyOrdersResponse.class,
-                    rentalItem.name,
-                    rentalItem.category,
-                    orderItem.quantity,
+                    order.id,
                     order.orderStatus.stringValue(),
+                    order.totalAmount,
                     order.createdAt
                 ))
                 .from(order)
-                .join(orderItem).on(order.id.eq(orderItem.orderId))
-                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
                 .where(order.userId.eq(userId))
+                .orderBy(order.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
