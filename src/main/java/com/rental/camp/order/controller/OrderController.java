@@ -17,8 +17,8 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/reserve")
-    public ResponseEntity<?> createOrder(@RequestBody OrderRequest requestDTO, JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest requestDTO, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         try {
             // OrderService를 사용하여 주문 생성
             OrderResponse responseDTO = orderService.createOrder(uuid, requestDTO);
@@ -30,8 +30,8 @@ public class OrderController {
     }
 
     @PutMapping("/complete")
-    public ResponseEntity<OrderResponse> completeOrder(@RequestBody OrderRequest request, JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+    public ResponseEntity<OrderResponse> completeOrder(@RequestBody OrderRequest request, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         OrderResponse response = orderService.completeOrder(uuid, request);
         return ResponseEntity.ok(response);
     }
@@ -40,8 +40,8 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderDetails(
             @PathVariable(name = "orderId") Long orderId,
-            JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+            JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         try {
             OrderResponse response = orderService.getOrderDetails(uuid, orderId);
             return ResponseEntity.ok(response);
@@ -53,9 +53,9 @@ public class OrderController {
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
             @PathVariable(name = "orderId") Long orderId,
-            JwtAuthenticationToken principle
+            JwtAuthenticationToken principal
     ) {
-        String uuid = principle.getName();
+        String uuid = principal.getName();
         try {
             OrderResponse response = orderService.cancelOrder(uuid, orderId);
             return ResponseEntity.ok(response);

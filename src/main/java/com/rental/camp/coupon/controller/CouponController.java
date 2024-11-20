@@ -22,16 +22,16 @@ public class CouponController {
     private final CouponService couponService;
 
     @GetMapping("/user-coupons")
-    public ResponseEntity<Page<CouponResponse>> getUserCouponList(JwtAuthenticationToken principle, Pageable pageable) {
-        String uuid = principle.getName();
+    public ResponseEntity<Page<CouponResponse>> getUserCouponList(JwtAuthenticationToken principal, Pageable pageable) {
+        String uuid = principal.getName();
         Page<CouponResponse> couponResponse = couponService.getCouponList(uuid, pageable);
         return ResponseEntity.ok(couponResponse);
     }
 
     @PostMapping("/user-coupons")
-    public ResponseEntity<?> issueCoupon(@RequestBody IssueCouponRequest request, JwtAuthenticationToken principle) {
+    public ResponseEntity<?> issueCoupon(@RequestBody IssueCouponRequest request, JwtAuthenticationToken principal) {
         try {
-            String uuid = principle.getName();
+            String uuid = principal.getName();
             UserCoupon userCoupon = couponService.issueUserCoupon(uuid, request.getCouponId());
             return ResponseEntity.ok(userCoupon);
         } catch (IllegalArgumentException | IllegalStateException e) {
