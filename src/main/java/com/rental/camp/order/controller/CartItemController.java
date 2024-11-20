@@ -16,23 +16,23 @@ public class CartItemController {
     private final CartItemService cartItemService;
 
     @PostMapping
-    public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest requestDto, JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+    public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest requestDto, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         CartItemResponse responseDto = cartItemService.addCartItem(uuid, requestDto);
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping
-    public ResponseEntity<CartItemListResponse> getCartItems(JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+    public ResponseEntity<CartItemListResponse> getCartItems(JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         CartItemListResponse responseDto = cartItemService.getCartItemsByUserId(uuid);
         return ResponseEntity.ok(responseDto);
     }
 
     @PutMapping("/quantity")
     public ResponseEntity<UpdateCartItemResponse> updateCartItemQuantity(
-            @Valid @RequestBody UpdateCartItemRequest request, JwtAuthenticationToken principle) {
-        String uuid = principle.getName();
+            @Valid @RequestBody UpdateCartItemRequest request, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
         UpdateCartItemResponse response = cartItemService.updateCartItemQuantity(uuid, request);
         if (response.getCartItem() == null) {
             return ResponseEntity.badRequest().body(response);
