@@ -1,5 +1,6 @@
 package com.rental.camp.coupon.service;
 
+import com.rental.camp.coupon.dto.ActiveCouponResponse;
 import com.rental.camp.coupon.dto.CouponResponse;
 import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.UserCoupon;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,20 +27,29 @@ public class CouponService {
     private final UserCouponRepository userCouponRepository;
 
 
-    public Page<CouponResponse> getAllActiveCoupons(Pageable pageable) {
+    public Page<ActiveCouponResponse> getAllActiveCoupons(String uuid, Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        Page<Coupon> coupons = couponRepository.findByIsDeletedFalseAndExpiryDateAfterOrderByCreatedAtDesc(now, pageable);
 
-        Page<Coupon> coupons = couponRepository.findByIsDeletedFalseAndExpiryDateAfter(now, pageable);
+        List<UserCoupon> receivedCoupons = userCouponRepository.findByUserId(userId);
+
+        List<Long> receivedCouponIds = receivedCoupons.stream()
+                .map(UserCoupon::getCouponId)
+                .toList();
 
         // Coupon 엔티티를 CouponResponse로 변환
-        return coupons.map(coupon -> CouponResponse.builder()
+        return coupons.map(coupon -> ActiveCouponResponse.builder()
                 .couponId(coupon.getId())
                 .name(coupon.getName())
+                .amount(coupon.getAmount())
                 .discount(coupon.getDiscount())
                 .type(coupon.getType())
                 .expiryDate(coupon.getExpiryDate())
                 .isUsed(false)
+                .isReceived(receivedCouponIds.contains(coupon.getId()))
                 .createdAt(coupon.getCreatedAt())
+
                 .build());
     }
 

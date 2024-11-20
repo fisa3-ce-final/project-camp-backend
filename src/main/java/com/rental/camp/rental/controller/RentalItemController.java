@@ -62,6 +62,12 @@ public class RentalItemController {
         }
     }
 
+    @GetMapping("/search/{keyword}")
+    public Page<RentalItemResponse> searchRentalItems(@PathVariable(name = "keyword") String keyword,
+                                                      @ModelAttribute RentalItemRequest requestDto) {
+        return rentalItemService.searchRentalItems(keyword, requestDto);
+    }
+
     @GetMapping("/my-rental-items")
     public Page<MyRentalItemsResponse> getMyRentalItems(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();

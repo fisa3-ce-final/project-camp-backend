@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -56,12 +57,10 @@ public class OrderService {
         Map<Long, RentalItem> rentalItemMap = orderRepository.findRentalItemsByIds(
                 cartItems.stream().map(CartItem::getRentalItemId).collect(Collectors.toList())
         );
-
-        //주의
         long rentalDays = calculateRentalDays(order);
 
-        BigDecimal totalItemPrice = createOrderItems(order, cartItems, rentalItemMap, rentalDays);
-
+        BigDecimal totalItemPrice = createOrderItems(order, cartItems, rentalItemMap, rentalDays)
+                .setScale(0, RoundingMode.DOWN);
         processCouponAndUpdateTotal(order, requestDTO.getUserCouponId(), totalItemPrice);
 
         User user = orderRepository.findUserById(userId)
@@ -74,8 +73,19 @@ public class OrderService {
 
     private OrderResponse createOrderResponse(Order order, User user,
                                               List<OrderItemInfo> orderItems, BigDecimal totalItemPrice, long rentalDays) {
-        BigDecimal finalPrice = order.getTotalAmount();
+
+        totalItemPrice = totalItemPrice.setScale(0, RoundingMode.DOWN);
+
+
+        BigDecimal finalPrice = order.getTotalAmount().setScale(0, RoundingMode.DOWN);
+
+
         BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
+
+
+        discountAmount = discountAmount.setScale(0, RoundingMode.DOWN);
+
+
         BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -279,7 +289,8 @@ public class OrderService {
 
             OrderItem orderItem = createOrderItem(order, cartItem, item, rentalDays);
             orderItemRepository.save(orderItem);
-            totalItemPrice = totalItemPrice.add(orderItem.getSubtotal());
+            totalItemPrice = totalItemPrice.add(orderItem.getSubtotal()).setScale(0, RoundingMode.DOWN);
+            ;
         }
 
         return totalItemPrice;

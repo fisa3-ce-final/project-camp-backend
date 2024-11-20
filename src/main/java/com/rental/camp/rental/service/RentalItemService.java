@@ -97,6 +97,32 @@ public class RentalItemService {
         rentalItemImageRepository.saveAll(images);
     }
 
+    public Page<RentalItemResponse> searchRentalItems(String keyword, RentalItemRequest requestDto) {
+        Page<RentalItem> searchResult = rentalItemRepository.findItemsBySearchKeyword(keyword, PageRequest.of(requestDto.getPage(), requestDto.getSize()));
+
+        return searchResult.map(item -> {
+            RentalItemResponse responseDto = new RentalItemResponse();
+            Long userId = item.getUserId();
+            Optional<User> user = userRepository.findById(userId);
+
+            List<RentalItemImage> images = rentalItemImageRepository.findByRentalItemId(item.getId());
+            String rentalItemImageUrl = images.isEmpty() ? "이미지 없음" : images.get(0).getImageUrl();
+
+            responseDto.setNickname(user.get().getNickname());
+            responseDto.setUserImageUrl(user.get().getImageUrl());
+            responseDto.setRentalId(item.getId());
+            responseDto.setRentalImageUrl(rentalItemImageUrl);
+            responseDto.setRentalItemName(item.getName());
+            responseDto.setPrice(item.getPrice());
+            responseDto.setStock(item.getStock());
+            responseDto.setCategory(item.getCategory());
+            responseDto.setStatus(item.getStatus());
+            responseDto.setRatingAvg(item.getRatingAvg());
+
+            return responseDto;
+        });
+    }
+
     // 마이페이지에서 내 대여 기록 조회
     public Page<MyRentalItemsResponse> getMyRentalItems(String uuid, MyPageRequest request) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();

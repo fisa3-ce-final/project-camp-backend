@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
-public class CouponResponse {
+public class ActiveCouponResponse {
     private Long couponId;
     private String name;
     private Integer amount;
@@ -24,11 +24,12 @@ public class CouponResponse {
     private CouponType type;
     private LocalDateTime expiryDate;
     private boolean isUsed;
+    private boolean isReceived;
     private LocalDateTime createdAt;
 
-    public CouponResponse(Long couponId, String name, BigDecimal discount,
-                          CouponType type, LocalDateTime expiryDate,
-                          Boolean isUsed, LocalDateTime createdAt) {
+    public ActiveCouponResponse(Long couponId, String name, BigDecimal discount,
+                                CouponType type, LocalDateTime expiryDate,
+                                Boolean isUsed, LocalDateTime createdAt) {
         this.couponId = couponId;
         this.name = name;
         this.discount = discount;
@@ -38,14 +39,25 @@ public class CouponResponse {
         this.createdAt = createdAt;
     }
 
-    public CouponResponse(Long couponId, String name, BigDecimal discount,
-                          CouponType type, LocalDateTime expiryDate,
-                          LocalDateTime createdAt) {
+    public ActiveCouponResponse(Long couponId, String name, BigDecimal discount,
+                                CouponType type, LocalDateTime expiryDate,
+                                LocalDateTime createdAt) {
         this.couponId = couponId;
         this.name = name;
         this.discount = discount;
         this.type = type;
         this.expiryDate = expiryDate;
+        this.createdAt = createdAt;
+    }
+
+    public ActiveCouponResponse(Long couponId, String name, Integer amount, BigDecimal discount, CouponType type, LocalDateTime expiryDate, boolean isUsed, LocalDateTime createdAt) {
+        this.couponId = couponId;
+        this.name = name;
+        this.amount = amount;
+        this.discount = discount;
+        this.type = type;
+        this.expiryDate = expiryDate;
+        this.isUsed = isUsed;
         this.createdAt = createdAt;
     }
 }

@@ -128,6 +128,26 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     }
 
     @Override
+    public Page<RentalItem> findItemsBySearchKeyword(String keyword, Pageable pageable) {
+        QRentalItem rentalItem = QRentalItem.rentalItem;
+
+        List<RentalItem> items = jpaQueryFactory.select(rentalItem)
+                .from(rentalItem)
+                .where(rentalItem.description.contains(keyword))
+                .orderBy(rentalItem.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
+                .from(rentalItem)
+                .where(rentalItem.description.contains(keyword))
+                .fetchOne()).orElse(0L);
+
+        return new PageImpl<>(items, pageable, total);
+    }
+
+    @Override
     public Page<MyRentalItemsResponse> findRentalItemsByUserId(Long userId, Pageable pageable) {
         QOrder order = QOrder.order;
         QOrderItem orderItem = QOrderItem.orderItem;
