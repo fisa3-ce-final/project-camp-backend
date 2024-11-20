@@ -2,6 +2,7 @@ package com.rental.camp.order.controller;
 
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
+import com.rental.camp.order.dto.PendingOrderResponse;
 import com.rental.camp.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,17 @@ public class OrderController {
         String uuid = principal.getName();
         try {
             OrderResponse response = orderService.cancelOrder(uuid, orderId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<?> findPendingOrder(JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        try {
+            PendingOrderResponse response = orderService.findPendingOrder(uuid);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

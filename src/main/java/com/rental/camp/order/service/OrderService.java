@@ -8,6 +8,7 @@ import com.rental.camp.coupon.repository.UserCouponRepository;
 import com.rental.camp.order.dto.OrderItemInfo;
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
+import com.rental.camp.order.dto.PendingOrderResponse;
 import com.rental.camp.order.model.CartItem;
 import com.rental.camp.order.model.Order;
 import com.rental.camp.order.model.OrderItem;
@@ -397,6 +398,21 @@ public class OrderService {
 
     private String formatCreatedAt(LocalDateTime createdAt) {
         return createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    public PendingOrderResponse findPendingOrder(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        Order order = orderRepository.findPendingOrderByUser(userId)
+                .orElseThrow(() -> new RuntimeException("예약 중인 주문이 없습니다."));
+        return new PendingOrderResponse(
+                order.getUserId(),
+                order.getId(),
+                order.getOrderStatus(),
+                order.getTotalAmount(),
+                order.getCreatedAt()
+        );
+
+
     }
 }
 
