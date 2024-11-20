@@ -72,7 +72,7 @@ public class CouponService {
         if (coupon.getAmount() <= 0) {
             throw new IllegalStateException("쿠폰의 수량이 부족합니다.");
         }
-        if (userCouponRepository.findByCouponIdAndUserId(userId, couponId).isPresent()) {
+        if (userCouponRepository.findByCouponIdAndUserId(couponId, userId).isPresent()) {
             throw new IllegalStateException("이미 발급받은 쿠폰입니다.");
         }
 
