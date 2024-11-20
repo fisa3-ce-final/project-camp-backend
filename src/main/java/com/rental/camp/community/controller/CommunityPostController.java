@@ -5,13 +5,14 @@ import com.rental.camp.community.dto.CommunityPostResponseDto;
 import com.rental.camp.community.dto.CommunityPostUpdateRequestDto;
 import com.rental.camp.community.dto.PageResponseDto;
 import com.rental.camp.community.service.CommunityPostService;
-import com.rental.camp.coupon.dto.CouponResponse;
+import com.rental.camp.coupon.dto.ActiveCouponResponse;
 import com.rental.camp.coupon.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -97,8 +98,9 @@ public class CommunityPostController {
 
 
     @GetMapping("/coupon")
-    public ResponseEntity<Page<CouponResponse>> getActiveCoupons(Pageable pageable) {
-        Page<CouponResponse> coupons = couponService.getAllActiveCoupons(pageable);
+    public ResponseEntity<Page<ActiveCouponResponse>> getActiveCoupons(Pageable pageable, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        Page<ActiveCouponResponse> coupons = couponService.getAllActiveCoupons(uuid, pageable);
         return ResponseEntity.ok(coupons);
     }
 }
