@@ -8,6 +8,7 @@ import com.rental.camp.coupon.repository.UserCouponRepository;
 import com.rental.camp.order.dto.OrderItemInfo;
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
+import com.rental.camp.order.dto.PaymentInfo;
 import com.rental.camp.order.model.CartItem;
 import com.rental.camp.order.model.Order;
 import com.rental.camp.order.model.OrderItem;
@@ -27,10 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -386,6 +384,38 @@ public class OrderService {
 
     private String formatCreatedAt(LocalDateTime createdAt) {
         return createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    // PENDING 상태의 주문을 찾아 totalAmount 반환
+    public BigDecimal getPendingOrderTotalAmount(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        // PENDING 상태의 주문을 찾기
+        Optional<Order> orderOptional = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.PENDING);
+
+        // 주문이 존재하면 totalAmount를 반환
+        return orderOptional.map(Order::getTotalAmount)
+                .orElse(BigDecimal.ZERO); // 주문이 없으면 0 반환
+    }
+
+    public PaymentInfo getPaymentInfo(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        // 주문 정보 조회
+        Order order = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.PENDING)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾지 못했습니다"));
+
+        // 사용자 정보 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾지 못했습니다"));
+
+        PaymentInfo paymentInfo = new PaymentInfo();
+        paymentInfo.setOrderId(order.getId());
+        paymentInfo.setOrderName("캠퍼파이 결제");
+        paymentInfo.setSuccessUrl("");
+        paymentInfo.setFailUrl("");
+        paymentInfo.setCustomerEmail(user.getEmail());
+        paymentInfo.setCustomerName(user.getUsername());
+        paymentInfo.setCustomerMobilePhone(user.getPhone());
+        return paymentInfo;
     }
 }
 

@@ -2,12 +2,18 @@ package com.rental.camp.order.controller;
 
 import com.rental.camp.order.dto.OrderRequest;
 import com.rental.camp.order.dto.OrderResponse;
+import com.rental.camp.order.dto.PaymentInfo;
+import com.rental.camp.order.dto.SaveAmountRequest;
 import com.rental.camp.order.service.OrderService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @RestController
 @RequestMapping("/orders")
@@ -62,5 +68,51 @@ public class OrderController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/amount")
+    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+    public ResponseEntity<?> getTotalAmount(JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            BigDecimal amount = orderService.getPendingOrderTotalAmount(uuid);
+
+            if (amount == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            amount = amount.setScale(0, RoundingMode.DOWN);
+
+            return ResponseEntity.ok(amount);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("주문 금액 조회 실패: " + e.getMessage());
+        }
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+    @GetMapping("/paymentInfo")
+    public ResponseEntity<?> getPaymentInfo(JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            PaymentInfo paymentInfo = orderService.getPaymentInfo(uuid);
+
+            if (paymentInfo == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(paymentInfo);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("주문 조회 실패: " + e.getMessage());
+        }
+
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+    @PostMapping("/saveAmount")
+    public ResponseEntity<?> saveTemp(HttpSession session, @RequestBody SaveAmountRequest saveAmountRequest) {
+        session.setAttribute(String.valueOf(saveAmountRequest.getOrderId()), saveAmountRequest.getAmount());
+        return ResponseEntity.ok("결제 정보 저장 완료");
     }
 }
