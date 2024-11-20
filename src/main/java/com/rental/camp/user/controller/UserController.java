@@ -5,25 +5,20 @@ import com.rental.camp.user.dto.UserModifyRequest;
 import com.rental.camp.user.dto.UserModifyResponse;
 import com.rental.camp.user.dto.UserSigninRequest;
 import com.rental.camp.user.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
-    @Autowired
-    UserService userService;
+
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<String> signin(@RequestBody UserSigninRequest userSigninRequest, JwtAuthenticationToken principal) {
@@ -66,4 +61,15 @@ public class UserController {
         userService.deleteUser(principal);
         return ResponseEntity.ok("delete success: " + principal.getName());
     }
+
+    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+    @GetMapping("/uuid")
+    public ResponseEntity<Map<String, String>> getUserUuid(JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+
+        System.out.println(uuid + "11111111111111111111111111111111111");
+        return ResponseEntity.ok(Map.of("uuid", uuid));
+    }
+
+
 }
