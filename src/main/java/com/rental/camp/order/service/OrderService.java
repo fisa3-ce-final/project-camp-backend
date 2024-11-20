@@ -21,6 +21,7 @@ import com.rental.camp.rental.repository.RentalItemRepository;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -413,6 +414,31 @@ public class OrderService {
         );
 
 
+    }
+
+    @Transactional
+    public void deletePending(String uuid, Long orderId) {
+        try {
+            Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+
+            Order order = orderRepository.findPendingOrderByOrderId(orderId)
+                    .orElseThrow(() -> new RuntimeException("예약 중인 주문이 없습니다."));
+
+            if (order.getUserId().equals(userId)) {
+                orderRepository.delete(order);
+            } else {
+                throw new IllegalStateException("해당 주문은 이 사용자에게 속하지 않습니다.");
+            }
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new RuntimeException(e.getMessage(), e);
+
+        } catch (EmptyResultDataAccessException e) {
+            throw new RuntimeException("예약 중인 주문을 찾을 수 없습니다.", e);
+
+        } catch (Exception e) {
+            throw new RuntimeException("오류가 발생했습니다. 다시 시도해주세요.", e);
+        }
     }
 }
 
