@@ -102,6 +102,20 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     }
 
     @Override
+    public Optional<Order> findPendingOrderByOrderId(Long orderId) {
+        QOrder qOrder = QOrder.order;
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(qOrder)
+                        .where(
+                                qOrder.id.eq(orderId)
+                                        .and(qOrder.orderStatus.eq(OrderStatus.PENDING))
+                        )
+                        .fetchOne()
+        );
+    }
+
+    @Override
     public Optional<Order> findPendingOrderByUser(Long userId) {
         QOrder qOrder = QOrder.order;
         return Optional.ofNullable(

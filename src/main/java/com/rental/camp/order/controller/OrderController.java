@@ -51,6 +51,18 @@ public class OrderController {
         }
     }
 
+    @DeleteMapping("/{orderId}/pending")
+    public ResponseEntity<?> deletePendingOrder(@PathVariable(name = "orderId") Long orderId, JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        try {
+            orderService.deletePending(uuid, orderId);
+            return ResponseEntity.ok("삭제 성공");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
             @PathVariable(name = "orderId") Long orderId,
