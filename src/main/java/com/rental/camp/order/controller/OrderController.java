@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
@@ -81,7 +83,7 @@ public class OrderController {
     public ResponseEntity<?> findPendingOrder(JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         try {
-            PendingOrderResponse response = orderService.findPendingOrder(uuid);
+            List<PendingOrderResponse> response = orderService.findPendingOrder(uuid);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

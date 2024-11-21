@@ -28,7 +28,7 @@ public interface OrderRepositoryCustom {
 
     Optional<Order> findPendingOrderByOrderId(Long orderId);
 
-    Optional<Order> findPendingOrderByUser(Long userId);
+    List<Order> findPendingOrderByUser(Long userId);
 
     Map<Long, RentalItem> findRentalItemsByIds(List<Long> rentalItemIds);
 
