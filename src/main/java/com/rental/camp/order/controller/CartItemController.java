@@ -4,6 +4,7 @@ import com.rental.camp.order.dto.*;
 import com.rental.camp.order.service.CartItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +17,15 @@ public class CartItemController {
     private final CartItemService cartItemService;
 
     @PostMapping
-    public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest requestDto, JwtAuthenticationToken principal) {
-        String uuid = principal.getName();
-        CartItemResponse responseDto = cartItemService.addCartItem(uuid, requestDto);
-        return ResponseEntity.ok(responseDto);
+    public ResponseEntity<?> addCartItem(@RequestBody CartItemRequest requestDto, JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            CartItemResponse responseDto = cartItemService.addCartItem(uuid, requestDto);
+            return ResponseEntity.ok(responseDto);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
     }
 
     @GetMapping
