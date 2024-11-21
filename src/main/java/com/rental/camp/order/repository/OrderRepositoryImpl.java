@@ -208,7 +208,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
         Integer count = queryFactory.selectOne().from(order)
                 .join(orderItem).on(order.id.eq(orderItem.orderId))
-                .join(cartItem).on(orderItem.rentalItemId.eq(cartItem.id))
+                .join(cartItem).on(orderItem.rentalItemId.eq(cartItem.rentalItemId))
                 .where(
                         order.userId.eq(userId),
                         order.orderStatus.eq(status),
