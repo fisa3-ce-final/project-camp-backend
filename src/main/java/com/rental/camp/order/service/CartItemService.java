@@ -4,7 +4,10 @@ import com.rental.camp.coupon.dto.CouponResponse;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.order.dto.*;
 import com.rental.camp.order.repository.CartItemRepository;
+import com.rental.camp.rental.model.RentalItem;
+import com.rental.camp.rental.repository.RentalItemRepository;
 import com.rental.camp.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +22,19 @@ public class CartItemService {
     private final CartItemRepository cartItemRepository;
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final RentalItemRepository rentalItemRepository;
 
     @Transactional
     public CartItemResponse addCartItem(String uuid, CartItemRequest requestDto) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
 
+        if (requestDto.getRentalItemId() == null || requestDto.getRentalItemId() <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 대여 상품 ID입니다.");
+        }
 
+        RentalItem rentalItem = rentalItemRepository.findById(requestDto.getRentalItemId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 대여 상품을 찾을 수 없습니다."));
+        
         if (cartItemRepository.existsByUserIdAndRentalItemId(userId, requestDto.getRentalItemId())) {
             throw new IllegalArgumentException("이미 장바구니에 담긴 아이템입니다.");
         }
