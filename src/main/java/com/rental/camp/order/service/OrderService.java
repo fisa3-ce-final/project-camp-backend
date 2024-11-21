@@ -422,19 +422,19 @@ public class OrderService {
         return createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
-    public PendingOrderResponse findPendingOrder(String uuid) {
+    public List<PendingOrderResponse> findPendingOrder(String uuid) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
-        Order order = orderRepository.findPendingOrderByUser(userId)
-                .orElseThrow(() -> new RuntimeException("예약 중인 주문이 없습니다."));
-        return new PendingOrderResponse(
+        List<Order> orders = orderRepository.findPendingOrderByUser(userId);
+        if (orders.isEmpty()) {
+            throw new RuntimeException("예약 중인 주문이 없습니다.");
+        }
+        return orders.stream().map(order -> new PendingOrderResponse(
                 order.getUserId(),
                 order.getId(),
                 order.getOrderStatus(),
                 order.getTotalAmount(),
                 order.getCreatedAt()
-        );
-
-
+        )).collect(Collectors.toList());
     }
 
     @Transactional
