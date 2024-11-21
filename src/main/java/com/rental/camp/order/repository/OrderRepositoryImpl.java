@@ -264,19 +264,15 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         return count != null;
     }
 
+
     @Override
-    public void deleteOrderAndRelatedEntities(Order order) {
+    public void deleteOrderItemsByOrderId(Long orderId) {
         QOrderItem qOrderItem = QOrderItem.orderItem;
 
-        // Order Item 먼저 삭제
-        queryFactory
+        long deletedCount = queryFactory
                 .delete(qOrderItem)
-                .where(qOrderItem.orderId.eq(order.getId()))
+                .where(qOrderItem.orderId.eq(orderId))
                 .execute();
-
-        // Order 삭제
-        entityManager.remove(order);
-        entityManager.flush();
     }
 
 

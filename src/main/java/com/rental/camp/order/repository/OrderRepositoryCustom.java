@@ -44,6 +44,6 @@ public interface OrderRepositoryCustom {
     boolean existsByUserIdAndStatusAndCartItemIds(Long userId, OrderStatus status, List<Long> cartItemIds);
 
     boolean existsByUserIdAndStatusAndCouponId(Long userId, OrderStatus status, Long couponId);
-
-    void deleteOrderAndRelatedEntities(Order order);
+    
+    void deleteOrderItemsByOrderId(Long orderId);
 }

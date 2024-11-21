@@ -95,7 +95,8 @@ public class OrderService {
 //            if (order == null) {
 //                throw new RuntimeException("해당 주문을 찾을 수 없습니다.");
 //            }
-            //orderRepository.deleteOrderAndRelatedEntities(order);
+//            orderRepository.deleteOrderItemsByOrderId(order.getId());
+//            orderRepository.delete(order);
 
             throw new RuntimeException(message.toString());
         }
@@ -341,7 +342,7 @@ public class OrderService {
             OrderItem orderItem = createOrderItem(order, cartItem, item, rentalDays);
             orderItemRepository.save(orderItem);
             totalItemPrice = totalItemPrice.add(orderItem.getSubtotal()).setScale(0, RoundingMode.DOWN);
-            ;
+
         }
 
         return totalItemPrice;
@@ -463,6 +464,7 @@ public class OrderService {
         )).collect(Collectors.toList());
     }
 
+
     @Transactional
     public void deletePending(String uuid, Long orderId) {
         try {
@@ -472,6 +474,7 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("예약 중인 주문이 없습니다."));
 
             if (order.getUserId().equals(userId)) {
+                orderRepository.deleteOrderItemsByOrderId(orderId);
                 orderRepository.delete(order);
             } else {
                 throw new IllegalStateException("해당 주문은 이 사용자에게 속하지 않습니다.");
