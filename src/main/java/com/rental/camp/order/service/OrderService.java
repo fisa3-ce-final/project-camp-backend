@@ -30,10 +30,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,6 +71,34 @@ public class OrderService {
         List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
         return createOrderResponse(order, user, orderItems, totalItemPrice, rentalDays);
+    }
+
+    @Transactional
+    private void checkRentalItemStock(OrderRequest request, Long userId) {
+        List<CartItem> shortageStockList = orderRepository.checkRentalItemStock(request.getCartItemIds());
+        if (!shortageStockList.isEmpty()) {
+            StringBuilder message = new StringBuilder("재고 부족:\n");
+            for (CartItem cartItem : shortageStockList) {
+                Optional<RentalItem> item = rentalItemRepository.findById(cartItem.getRentalItemId());
+                String name = item.map(RentalItem::getName)
+                        .orElse("이름 없음");
+                Integer stock = item.map(RentalItem::getStock)
+                        .orElse(0);
+                message.append("아이템명: ").append(name)  // 아이템명
+                        .append(", 주문 수량: ").append(cartItem.getQuantity())  // 수량
+                        .append(", 재고: ").append(stock)
+                        .append("\n")
+                        .append("예약 취소 후 다시 주문해 주세요")
+                        .append("\n");
+            }
+//            Order order = orderRepository.findOrderByCartItems(request.getCartItemIds(), userId);
+//            if (order == null) {
+//                throw new RuntimeException("해당 주문을 찾을 수 없습니다.");
+//            }
+            //orderRepository.deleteOrderAndRelatedEntities(order);
+
+            throw new RuntimeException(message.toString());
+        }
     }
 
     private void checkPendingOrderConflicts(Long userId, OrderRequest requestDTO) {
@@ -166,10 +191,10 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException(
                             "RentalItem을 찾을 수 없습니다. ID: " + orderItem.getRentalItemId()));
 
-            if (rentalItem.getStock() < orderItem.getQuantity()) {
-                throw new RuntimeException(
-                        "재고가 부족한 상품이 있습니다. 상품 ID: " + orderItem.getRentalItemId());
-            }
+//            if (rentalItem.getStock() < orderItem.getQuantity()) {
+//                throw new RuntimeException(
+//                        "재고가 부족한 상품이 있습니다. 상품 ID: " + orderItem.getRentalItemId());
+//            }
 
             rentalItem.setStock(rentalItem.getStock() - orderItem.getQuantity());
             rentalItemRepository.save(rentalItem);
@@ -179,6 +204,7 @@ public class OrderService {
     @Transactional
     public OrderResponse completeOrder(String uuid, OrderRequest request) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        checkRentalItemStock(request, userId);
         Order existingOrder = orderRepository.findPendingOrderByUserAndItem(uuid, request)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
 

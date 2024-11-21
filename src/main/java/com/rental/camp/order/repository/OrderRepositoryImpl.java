@@ -13,6 +13,7 @@ import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.user.model.QUser;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -31,6 +32,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
+    private final EntityManager entityManager;
 
 
     private BooleanExpression existsOrderItemForCartItem(QOrderItem qOrderItem, OrderRequest request) {
@@ -96,6 +98,35 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                         )
                         .fetchOne()
         );
+    }
+
+    @Override
+    public List<CartItem> checkRentalItemStock(List<Long> cartItemIds) {
+        QCartItem qCartItem = QCartItem.cartItem;
+        QRentalItem qRentalItem = QRentalItem.rentalItem;
+        return queryFactory.selectFrom(qCartItem).
+                join(qRentalItem).on(qCartItem.rentalItemId.eq(qRentalItem.id))
+                .where(qCartItem.quantity.gt(qRentalItem.stock)).fetch();
+    }
+
+    @Override
+    public Order findOrderByCartItems(List<Long> cartItemIds, Long userId) {
+        QCartItem qCartItem = QCartItem.cartItem;
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+        QOrder qOrder = QOrder.order;
+
+        return queryFactory
+                .select(qOrder)
+                .from(qOrder)
+                .innerJoin(qOrderItem).on(qOrderItem.orderId.eq(qOrder.id))
+                .innerJoin(qCartItem).on(qCartItem.rentalItemId.eq(qOrderItem.rentalItemId))
+                .where(
+                        qOrder.userId.eq(userId),
+                        qCartItem.id.in(cartItemIds)
+                )
+                .groupBy(qOrder.id)
+                .having(qOrder.id.count().eq(Long.valueOf(cartItemIds.size())))
+                .fetchOne();
     }
 
     @Override
@@ -231,6 +262,21 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 .fetchFirst();
 
         return count != null;
+    }
+
+    @Override
+    public void deleteOrderAndRelatedEntities(Order order) {
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+
+        // Order Item 먼저 삭제
+        queryFactory
+                .delete(qOrderItem)
+                .where(qOrderItem.orderId.eq(order.getId()))
+                .execute();
+
+        // Order 삭제
+        entityManager.remove(order);
+        entityManager.flush();
     }
 
 

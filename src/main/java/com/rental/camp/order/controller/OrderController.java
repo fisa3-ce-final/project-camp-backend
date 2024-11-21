@@ -33,10 +33,15 @@ public class OrderController {
     }
 
     @PutMapping("/complete")
-    public ResponseEntity<OrderResponse> completeOrder(@RequestBody OrderRequest request, JwtAuthenticationToken principal) {
-        String uuid = principal.getName();
-        OrderResponse response = orderService.completeOrder(uuid, request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> completeOrder(@RequestBody OrderRequest request, JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            OrderResponse response = orderService.completeOrder(uuid, request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
     }
 
     // 특정 주문 상세 조회
