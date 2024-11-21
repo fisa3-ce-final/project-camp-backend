@@ -133,7 +133,8 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         List<RentalItem> items = jpaQueryFactory.select(rentalItem)
                 .from(rentalItem)
-                .where(rentalItem.description.contains(keyword))
+                .where(rentalItem.description.contains(keyword)
+                        .and(rentalItem.status.eq(RentalItemStatus.AVAILABLE)))
                 .orderBy(rentalItem.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -141,7 +142,8 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         long total = Optional.ofNullable(jpaQueryFactory.select(rentalItem.count())
                 .from(rentalItem)
-                .where(rentalItem.description.contains(keyword))
+                .where(rentalItem.description.contains(keyword)
+                        .and(rentalItem.status.eq(RentalItemStatus.AVAILABLE)))
                 .fetchOne()).orElse(0L);
 
         return new PageImpl<>(items, pageable, total);
