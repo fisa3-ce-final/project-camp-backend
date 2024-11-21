@@ -55,6 +55,7 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(String uuid, OrderRequest requestDTO) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        checkPendingOrderConflicts(userId, requestDTO);
         Order order = orderRepository.save(createInitialOrder(uuid, requestDTO));
         List<CartItem> cartItems = cartItemRepository.findAllById(requestDTO.getCartItemIds());
 
@@ -73,6 +74,26 @@ public class OrderService {
         List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
         return createOrderResponse(order, user, orderItems, totalItemPrice, rentalDays);
+    }
+
+    private void checkPendingOrderConflicts(Long userId, OrderRequest requestDTO) {
+        // 동일한 장바구니 항목이 PENDING 상태 주문에 사용 중인지 확인
+        boolean cartItemConflict = orderRepository.existsByUserIdAndStatusAndCartItemIds(
+                userId, OrderStatus.PENDING, requestDTO.getCartItemIds()
+        );
+        if (cartItemConflict) {
+            throw new RuntimeException("예약 상태의 주문에서 이미 사용 중인 장바구니 항목이 있습니다.");
+        }
+
+        // 동일한 쿠폰이 PENDING 상태 주문에 사용 중인지 확인
+        if (requestDTO.getUserCouponId() != null) {
+            boolean couponConflict = orderRepository.existsByUserIdAndStatusAndCouponId(
+                    userId, OrderStatus.PENDING, requestDTO.getUserCouponId()
+            );
+            if (couponConflict) {
+                throw new RuntimeException("예약 상태의 주문에서 이미 사용 중인 쿠폰이 있습니다.");
+            }
+        }
     }
 
     private OrderResponse createOrderResponse(Order order, User user,

@@ -39,4 +39,8 @@ public interface OrderRepositoryCustom {
     boolean updateOrderStatus(Long orderId, OrderStatus status);
 
     List<OrderItemInfo> findOrderItems(Long orderId);
+
+    boolean existsByUserIdAndStatusAndCartItemIds(Long userId, OrderStatus status, List<Long> cartItemIds);
+
+    boolean existsByUserIdAndStatusAndCouponId(Long userId, OrderStatus status, Long couponId);
 }

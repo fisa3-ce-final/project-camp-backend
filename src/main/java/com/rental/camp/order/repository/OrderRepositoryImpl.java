@@ -6,10 +6,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.order.dto.OrderItemInfo;
 import com.rental.camp.order.dto.OrderRequest;
-import com.rental.camp.order.model.CartItem;
-import com.rental.camp.order.model.Order;
-import com.rental.camp.order.model.QOrder;
-import com.rental.camp.order.model.QOrderItem;
+import com.rental.camp.order.model.*;
 import com.rental.camp.order.model.type.OrderStatus;
 import com.rental.camp.rental.model.QRentalItem;
 import com.rental.camp.rental.model.RentalItem;
@@ -202,6 +199,42 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 .where(qOrderItem.orderId.eq(orderId))
                 .fetch();
     }
+
+    @Override
+    public boolean existsByUserIdAndStatusAndCartItemIds(Long userId, OrderStatus status, List<Long> cartItemIds) {
+        QOrder order = QOrder.order;
+        QOrderItem orderItem = QOrderItem.orderItem;
+        QCartItem cartItem = QCartItem.cartItem;
+
+        Integer count = queryFactory.selectOne().from(order)
+                .join(orderItem).on(order.id.eq(orderItem.orderId))
+                .join(cartItem).on(orderItem.rentalItemId.eq(cartItem.id))
+                .where(
+                        order.userId.eq(userId),
+                        order.orderStatus.eq(status),
+                        cartItem.id.in(cartItemIds)
+                )
+                .fetchFirst();
+        return count != null;
+    }
+
+    @Override
+    public boolean existsByUserIdAndStatusAndCouponId(Long userId, OrderStatus status, Long couponId) {
+        QOrder order = QOrder.order;
+
+        Integer count = queryFactory
+                .selectOne()
+                .from(order)
+                .where(
+                        order.userId.eq(userId),
+                        order.orderStatus.eq(status),
+                        order.couponId.eq(couponId) // 쿠폰 ID 조건
+                )
+                .fetchFirst();
+
+        return count != null;
+    }
+
 
 }
 
