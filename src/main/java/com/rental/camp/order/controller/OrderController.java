@@ -19,29 +19,23 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    // pending 상태 주문 생성
     @PostMapping("/reserve")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest requestDTO, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
-        try {
-            // OrderService를 사용하여 주문 생성
-            OrderResponse responseDTO = orderService.createOrder(uuid, requestDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
-        } catch (RuntimeException e) {
-            // 예외 발생 시, 오류 메시지를 포함하여 409 Conflict 상태 코드 반환
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        }
+
+        // OrderService를 사용하여 주문 생성
+        OrderResponse responseDTO = orderService.createOrder(uuid, requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
+    // 주문 완료
     @PutMapping("/complete")
     public ResponseEntity<?> completeOrder(@RequestBody OrderRequest request, JwtAuthenticationToken principal) {
-        try {
-            String uuid = principal.getName();
-            OrderResponse response = orderService.completeOrder(uuid, request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
 
+        String uuid = principal.getName();
+        OrderResponse response = orderService.completeOrder(uuid, request);
+        return ResponseEntity.ok(response);
     }
 
     // 특정 주문 상세 조회
@@ -49,49 +43,50 @@ public class OrderController {
     public ResponseEntity<OrderResponse> getOrderDetails(
             @PathVariable(name = "orderId") Long orderId,
             JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
-        try {
-            OrderResponse response = orderService.getOrderDetails(uuid, orderId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        OrderResponse response = orderService.getOrderDetails(uuid, orderId);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{orderId}/pending")
     public ResponseEntity<?> deletePendingOrder(@PathVariable(name = "orderId") Long orderId, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
-        try {
-            orderService.deletePending(uuid, orderId);
-            return ResponseEntity.ok("삭제 성공");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
+        orderService.deletePending(uuid, orderId);
+        return ResponseEntity.ok("삭제 성공");
     }
 
 
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(
-            @PathVariable(name = "orderId") Long orderId,
-            JwtAuthenticationToken principal
-    ) {
+            @PathVariable(name = "orderId") Long orderId, JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
-        try {
-            OrderResponse response = orderService.cancelOrder(uuid, orderId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        OrderResponse response = orderService.cancelOrder(uuid, orderId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/pending")
     public ResponseEntity<?> findPendingOrder(JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
-        try {
-            List<PendingOrderResponse> response = orderService.findPendingOrder(uuid);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        List<PendingOrderResponse> response = orderService.findPendingOrder(uuid);
+        return ResponseEntity.ok(response);
     }
+
+    // 예외처리 핸들러
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(RuntimeException e) {
+
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+
 }

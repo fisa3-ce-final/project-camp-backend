@@ -2,9 +2,9 @@ package com.rental.camp.order.controller;
 
 import com.rental.camp.order.dto.*;
 import com.rental.camp.order.service.CartItemService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -18,18 +18,15 @@ public class CartItemController {
 
     @PostMapping
     public ResponseEntity<?> addCartItem(@RequestBody CartItemRequest requestDto, JwtAuthenticationToken principal) {
-        try {
-            String uuid = principal.getName();
-            CartItemResponse responseDto = cartItemService.addCartItem(uuid, requestDto);
-            return ResponseEntity.ok(responseDto);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
 
+        String uuid = principal.getName();
+        CartItemResponse responseDto = cartItemService.addCartItem(uuid, requestDto);
+        return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping
     public ResponseEntity<CartItemListResponse> getCartItems(JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
         CartItemListResponse responseDto = cartItemService.getCartItemsByUserId(uuid);
         return ResponseEntity.ok(responseDto);
@@ -38,6 +35,7 @@ public class CartItemController {
     @PutMapping("/quantity")
     public ResponseEntity<UpdateCartItemResponse> updateCartItemQuantity(
             @Valid @RequestBody UpdateCartItemRequest request, JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
         UpdateCartItemResponse response = cartItemService.updateCartItemQuantity(uuid, request);
         if (response.getCartItem() == null) {
@@ -50,23 +48,28 @@ public class CartItemController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteCartItem(@PathVariable(name = "id") Long id) {
-        try {
-            cartItemService.deleteCartItem(id);
-            return ResponseEntity.ok("삭제 완료");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(400).body(e.getMessage());
-        }
-    }
 
-    // 예외 처리 메서드
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
+        cartItemService.deleteCartItem(id);
+        return ResponseEntity.ok("삭제 완료");
     }
 
     @GetMapping("/quantity")
     public Long getCartQuantity(JwtAuthenticationToken principal) {
+
         String uuid = principal.getName();
         return cartItemService.getCartQuantity(uuid);
+    }
+
+    // 예외 처리 핸들러
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException e) {
+        
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
