@@ -43,7 +43,8 @@ public class AdminController {
 
     // 관리자 승인 상태 수정
     @PutMapping("/rental-items/{id}")
-    public RentalItemStatus reviewAudit(@PathVariable(name = "id") Long id, @ModelAttribute UpdateStatusRequest request) {
-        return adminService.reviewAudit(id, request);
+    public String reviewAudit(@PathVariable(name = "id") Long id, @ModelAttribute UpdateStatusRequest request) {
+        RentalItemStatus result = adminService.reviewAudit(id, request);
+        return request.getStatus().toString() + " -> " + result.toString();
     }
 }
