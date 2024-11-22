@@ -20,6 +20,7 @@ import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.repository.RentalItemRepository;
 import com.rental.camp.user.model.User;
 import com.rental.camp.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
@@ -48,14 +49,30 @@ public class OrderService {
     private final UserRepository userRepository;
 
 
+    public List<CartItem> findCartItems(OrderRequest request) {
+        List<Long> requestedIds = request.getCartItemIds();
+        List<CartItem> cartItems = cartItemRepository.findAllById(requestedIds);
+        Set<Long> foundIds = cartItems.stream()
+                .map(CartItem::getId)
+                .collect(Collectors.toSet());
+        List<Long> notFoundIds = requestedIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!notFoundIds.isEmpty()) {
+            throw new EntityNotFoundException("다음 ID의 장바구니 항목을 찾을 수 없습니다: " + notFoundIds);
+        }
+        return cartItems;
+    }
+
     // PENDING 상태 주문 생성
     @Transactional
     public OrderResponse createOrder(String uuid, OrderRequest requestDTO) {
+        
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         checkPendingOrderConflicts(userId, requestDTO);
         Order order = orderRepository.save(createInitialOrder(uuid, requestDTO));
-        List<CartItem> cartItems = cartItemRepository.findAllById(requestDTO.getCartItemIds());
-
+        List<CartItem> cartItems = findCartItems(requestDTO);
         Map<Long, RentalItem> rentalItemMap = orderRepository.findRentalItemsByIds(
                 cartItems.stream().map(CartItem::getRentalItemId).collect(Collectors.toList())
         );
@@ -66,7 +83,7 @@ public class OrderService {
         processCouponAndUpdateTotal(order, requestDTO.getUserCouponId(), totalItemPrice);
 
         User user = orderRepository.findUserById(userId)
-                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다: " + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User를 찾을 수 없습니다: " + userId));
 
         List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
@@ -98,7 +115,7 @@ public class OrderService {
 //            orderRepository.deleteOrderItemsByOrderId(order.getId());
 //            orderRepository.delete(order);
 
-            throw new RuntimeException(message.toString());
+            throw new IllegalArgumentException(message.toString());
         }
     }
 

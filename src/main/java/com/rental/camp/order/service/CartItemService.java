@@ -34,7 +34,7 @@ public class CartItemService {
 
         RentalItem rentalItem = rentalItemRepository.findById(requestDto.getRentalItemId())
                 .orElseThrow(() -> new EntityNotFoundException("해당 대여 상품을 찾을 수 없습니다."));
-        
+
         if (cartItemRepository.existsByUserIdAndRentalItemId(userId, requestDto.getRentalItemId())) {
             throw new IllegalArgumentException("이미 장바구니에 담긴 아이템입니다.");
         }
