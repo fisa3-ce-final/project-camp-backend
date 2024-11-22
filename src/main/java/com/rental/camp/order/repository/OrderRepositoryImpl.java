@@ -101,12 +101,18 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     }
 
     @Override
-    public List<CartItem> checkRentalItemStock(List<Long> cartItemIds) {
+    public List<CartItem> checkRentalItemStock(List<Long> cartItemIds, Long userId) {
         QCartItem qCartItem = QCartItem.cartItem;
         QRentalItem qRentalItem = QRentalItem.rentalItem;
-        return queryFactory.selectFrom(qCartItem).
-                join(qRentalItem).on(qCartItem.rentalItemId.eq(qRentalItem.id))
-                .where(qCartItem.quantity.gt(qRentalItem.stock)).fetch();
+
+        return queryFactory.selectFrom(qCartItem)
+                .join(qRentalItem).on(qCartItem.rentalItemId.eq(qRentalItem.id))
+                .where(
+                        qCartItem.userId.eq(userId), // 특정 유저의 장바구니만 조회
+                        qCartItem.id.in(cartItemIds), // 요청된 CartItem만 필터링
+                        qCartItem.quantity.gt(qRentalItem.stock) // 수량이 재고보다 많은 항목만 조회
+                )
+                .fetch();
     }
 
     @Override

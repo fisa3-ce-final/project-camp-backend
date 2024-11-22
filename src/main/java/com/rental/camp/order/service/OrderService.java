@@ -68,7 +68,7 @@ public class OrderService {
     // PENDING 상태 주문 생성
     @Transactional
     public OrderResponse createOrder(String uuid, OrderRequest requestDTO) {
-        
+
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         checkPendingOrderConflicts(userId, requestDTO);
         Order order = orderRepository.save(createInitialOrder(uuid, requestDTO));
@@ -92,7 +92,7 @@ public class OrderService {
 
     @Transactional
     private void checkRentalItemStock(OrderRequest request, Long userId) {
-        List<CartItem> shortageStockList = orderRepository.checkRentalItemStock(request.getCartItemIds());
+        List<CartItem> shortageStockList = orderRepository.checkRentalItemStock(request.getCartItemIds(), userId);
         if (!shortageStockList.isEmpty()) {
             StringBuilder message = new StringBuilder("재고 부족:\n");
             for (CartItem cartItem : shortageStockList) {
