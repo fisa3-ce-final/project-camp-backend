@@ -22,10 +22,9 @@ public interface OrderRepositoryCustom {
     Optional<Order> findPendingOrderByUserAndItem(String uuid, OrderRequest request);
 
 
-    List<CartItem> checkRentalItemStock(List<Long> cartIds);
+    List<CartItem> checkRentalItemStock(List<Long> cartItemIds, Long userId);
 
     Order findOrderByCartItems(List<Long> cartItemIds, Long userId);
-
 
     Optional<Order> findPendingOrderByOrderId(Long orderId);
 
@@ -44,6 +43,6 @@ public interface OrderRepositoryCustom {
     boolean existsByUserIdAndStatusAndCartItemIds(Long userId, OrderStatus status, List<Long> cartItemIds);
 
     boolean existsByUserIdAndStatusAndCouponId(Long userId, OrderStatus status, Long couponId);
-    
+
     void deleteOrderItemsByOrderId(Long orderId);
 }
