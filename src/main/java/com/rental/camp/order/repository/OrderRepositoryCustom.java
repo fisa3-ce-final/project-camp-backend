@@ -24,6 +24,8 @@ public interface OrderRepositoryCustom {
 
     List<CartItem> checkRentalItemStock(List<Long> cartItemIds, Long userId);
 
+    List<CartItem> findOverStockCartItemsByOrderId(Long orderId, Long userId);
+
     Order findOrderByCartItems(List<Long> cartItemIds, Long userId);
 
     Optional<Order> findPendingOrderByOrderId(Long orderId);

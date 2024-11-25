@@ -62,14 +62,12 @@ public class UserController {
         return ResponseEntity.ok("delete success: " + principal.getName());
     }
 
-    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
     @GetMapping("/uuid")
     public ResponseEntity<Map<String, String>> getUserUuid(JwtAuthenticationToken principal) {
+        System.out.println("getUserUuid called with principal: {}" + principal);
         String uuid = principal.getName();
-
-        System.out.println(uuid + "11111111111111111111111111111111111");
+        System.out.println("Retrieved UUID: {}" + uuid);
         return ResponseEntity.ok(Map.of("uuid", uuid));
     }
-
 
 }

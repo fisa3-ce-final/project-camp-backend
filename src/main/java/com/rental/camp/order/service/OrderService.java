@@ -5,10 +5,7 @@ import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.UserCoupon;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.coupon.repository.UserCouponRepository;
-import com.rental.camp.order.dto.OrderItemInfo;
-import com.rental.camp.order.dto.OrderRequest;
-import com.rental.camp.order.dto.OrderResponse;
-import com.rental.camp.order.dto.PendingOrderResponse;
+import com.rental.camp.order.dto.*;
 import com.rental.camp.order.model.CartItem;
 import com.rental.camp.order.model.Order;
 import com.rental.camp.order.model.OrderItem;
@@ -108,16 +105,32 @@ public class OrderService {
                         .append("예약 취소 후 다시 주문해 주세요")
                         .append("\n");
             }
-//            Order order = orderRepository.findOrderByCartItems(request.getCartItemIds(), userId);
-//            if (order == null) {
-//                throw new RuntimeException("해당 주문을 찾을 수 없습니다.");
-//            }
-//            orderRepository.deleteOrderItemsByOrderId(order.getId());
-//            orderRepository.delete(order);
-
             throw new IllegalArgumentException(message.toString());
         }
     }
+
+    @Transactional
+    private void findOverStockCartItemsByOrderId(Long userId, Long orderId) {
+        List<CartItem> shortageStockList = orderRepository.findOverStockCartItemsByOrderId(orderId, userId);
+        if (!shortageStockList.isEmpty()) {
+            StringBuilder message = new StringBuilder("재고 부족:\n");
+            for (CartItem cartItem : shortageStockList) {
+                Optional<RentalItem> item = rentalItemRepository.findById(cartItem.getRentalItemId());
+                String name = item.map(RentalItem::getName)
+                        .orElse("이름 없음");
+                Integer stock = item.map(RentalItem::getStock)
+                        .orElse(0);
+                message.append("아이템명: ").append(name)  // 아이템명
+                        .append(", 주문 수량: ").append(cartItem.getQuantity())  // 수량
+                        .append(", 재고: ").append(stock)
+                        .append("\n")
+                        .append("예약 취소 후 다시 주문해 주세요")
+                        .append("\n");
+            }
+            throw new IllegalArgumentException(message.toString());
+        }
+    }
+
 
     private void checkPendingOrderConflicts(Long userId, OrderRequest requestDTO) {
         // 동일한 장바구니 항목이 PENDING 상태 주문에 사용 중인지 확인
@@ -217,6 +230,21 @@ public class OrderService {
             rentalItem.setStock(rentalItem.getStock() - orderItem.getQuantity());
             rentalItemRepository.save(rentalItem);
         }
+    }
+
+    @Transactional
+    public OrderResponse confirmOrder(String uuid, ConfirmRequestData request) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        Order existingOrder = orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        orderRepository.updateOrderStatus(existingOrder.getId(), OrderStatus.COMPLETED);
+        if (existingOrder.getCouponId() != null) {
+            updateUserCouponStatus(existingOrder);
+        }
+        List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(existingOrder.getId());
+
+        processOrderCompletion(existingOrder, orderItems);
+        return createCompletedOrderResponse(existingOrder, orderItems);
     }
 
     @Transactional
@@ -507,6 +535,40 @@ public class OrderService {
             throw new RuntimeException("오류가 발생했습니다. 다시 시도해주세요.", e);
         }
     }
+
+    // PENDING 상태의 주문을 찾아 totalAmount 반환
+    public BigDecimal getPendingOrderTotalAmount(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        // PENDING 상태의 주문을 찾기
+        Optional<Order> orderOptional = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.PENDING);
+
+        // 주문이 존재하면 totalAmount를 반환
+        return orderOptional.map(Order::getTotalAmount)
+                .orElse(BigDecimal.ZERO); // 주문이 없으면 0 반환
+    }
+
+    public PaymentInfo getPaymentInfo(String uuid) {
+        Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
+        // 주문 정보 조회
+        Order order = orderRepository.findByUserIdAndOrderStatus(userId, OrderStatus.PENDING)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾지 못했습니다"));
+
+        // 사용자 정보 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾지 못했습니다"));
+
+        PaymentInfo paymentInfo = new PaymentInfo();
+        paymentInfo.setOrderId(order.getId());
+        paymentInfo.setOrderName("캠퍼파이 결제");
+        paymentInfo.setSuccessUrl("");
+        paymentInfo.setFailUrl("");
+        paymentInfo.setCustomerEmail(user.getEmail());
+        paymentInfo.setCustomerName(user.getUsername());
+        paymentInfo.setCustomerMobilePhone(user.getPhone());
+        return paymentInfo;
+    }
+
+
 }
 
 

@@ -1,15 +1,16 @@
 package com.rental.camp.order.controller;
 
-import com.rental.camp.order.dto.OrderRequest;
-import com.rental.camp.order.dto.OrderResponse;
-import com.rental.camp.order.dto.PendingOrderResponse;
+import com.rental.camp.order.dto.*;
 import com.rental.camp.order.service.OrderService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @RestController
@@ -35,6 +36,15 @@ public class OrderController {
 
         String uuid = principal.getName();
         OrderResponse response = orderService.completeOrder(uuid, request);
+        return ResponseEntity.ok(response);
+    }
+
+    // 결제 모듈을 통한 주문 완료
+    @PostMapping("/confirm")
+    public ResponseEntity<?> confirm(@RequestBody ConfirmRequestData request, JwtAuthenticationToken principal) {
+
+        String uuid = principal.getName();
+        OrderResponse response = orderService.confirmOrder(uuid, request);
         return ResponseEntity.ok(response);
     }
 
@@ -88,5 +98,48 @@ public class OrderController {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
+    @GetMapping("/amount")
+    public ResponseEntity<?> getTotalAmount(JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            BigDecimal amount = orderService.getPendingOrderTotalAmount(uuid);
+
+            if (amount == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            amount = amount.setScale(0, RoundingMode.DOWN);
+
+            return ResponseEntity.ok(amount);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("주문 금액 조회 실패: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/paymentInfo")
+    public ResponseEntity<?> getPaymentInfo(JwtAuthenticationToken principal) {
+        try {
+            String uuid = principal.getName();
+            PaymentInfo paymentInfo = orderService.getPaymentInfo(uuid);
+
+            if (paymentInfo == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(paymentInfo);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("주문 조회 실패: " + e.getMessage());
+        }
+
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+    @PostMapping("/saveAmount")
+    public ResponseEntity<?> saveTemp(HttpSession session, @RequestBody SaveAmountRequest saveAmountRequest) {
+        session.setAttribute(String.valueOf(saveAmountRequest.getOrderId()), saveAmountRequest.getAmount());
+        return ResponseEntity.ok("결제 정보 저장 완료");
+    }
 
 }
