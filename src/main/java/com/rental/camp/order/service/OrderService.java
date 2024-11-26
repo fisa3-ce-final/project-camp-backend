@@ -486,8 +486,7 @@ public class OrderService {
     }
 
     private long calculateRentalDays(Order order) {
-        long days = ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate());
-        return days <= 0 ? 1 : days;
+        return ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate()) + 1;
     }
 
     private String formatCreatedAt(LocalDateTime createdAt) {
