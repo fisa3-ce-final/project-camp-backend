@@ -3,6 +3,7 @@ package com.rental.camp.order.service;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.UserCoupon;
+import com.rental.camp.coupon.model.type.CouponType;
 import com.rental.camp.coupon.repository.CouponRepository;
 import com.rental.camp.coupon.repository.UserCouponRepository;
 import com.rental.camp.order.dto.*;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -75,8 +77,13 @@ public class OrderService {
         );
         long rentalDays = calculateRentalDays(order);
 
-        BigDecimal totalItemPrice = createOrderItems(order, cartItems, rentalItemMap, rentalDays)
-                .setScale(0, RoundingMode.DOWN);
+        // 주문 아이템 생성 (가격 계산 없이)
+        createOrderItems(order, cartItems, rentalItemMap, rentalDays);
+
+        // 총 아이템 가격 계산
+        BigDecimal totalItemPrice = calculateTotalItemPrice(order, cartItems, rentalItemMap);
+
+        // 쿠폰 적용 및 총 금액 업데이트
         processCouponAndUpdateTotal(order, requestDTO.getUserCouponId(), totalItemPrice);
 
         User user = orderRepository.findUserById(userId)
@@ -163,11 +170,8 @@ public class OrderService {
 
         BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
 
+        BigDecimal finalDiscountAmount = discountAmount.abs().compareTo(BigDecimal.ONE) >= 0 ? discountAmount : null;
 
-        discountAmount = discountAmount.setScale(0, RoundingMode.DOWN);
-
-
-        BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String formattedCreatedAt = order.getCreatedAt().format(formatter);
@@ -283,11 +287,19 @@ public class OrderService {
 
 
     private BigDecimal applyCouponDiscount(BigDecimal totalAmount, Coupon coupon) {
-        return switch (coupon.getType()) {
-            case PERCENTAGE_DISCOUNT -> totalAmount.multiply(BigDecimal.ONE.subtract(coupon.getDiscount()));
-            case FIXED_AMOUNT_DISCOUNT -> totalAmount.subtract(coupon.getDiscount()).max(BigDecimal.ZERO);
-            //  default -> totalAmount;
-        };
+        if (coupon == null) return BigDecimal.ZERO;
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        if (coupon.getType() == CouponType.FIXED_AMOUNT_DISCOUNT) {
+            discountAmount = coupon.getDiscount().setScale(0, RoundingMode.DOWN);
+        } else if (coupon.getType() == CouponType.PERCENTAGE_DISCOUNT) {
+            discountAmount = totalAmount.multiply(coupon.getDiscount())
+                    .divide(BigDecimal.valueOf(100), RoundingMode.DOWN)
+                    .setScale(0, RoundingMode.DOWN);
+        }
+
+        return discountAmount;
     }
 
     private OrderResponse createOrderDetailsResponse(Order order, List<OrderItemInfo> orderItems) {
@@ -395,14 +407,17 @@ public class OrderService {
 
     @Transactional
     private void processCouponAndUpdateTotal(Order order, Long couponId, BigDecimal totalItemPrice) {
-        BigDecimal finalPrice = totalItemPrice;
+        BigDecimal discountAmount = BigDecimal.ZERO;
 
         if (couponId != null) {
             Coupon coupon = couponRepository.findById(couponId)
                     .orElseThrow(() -> new RuntimeException("Coupon을 찾을 수 없습니다: " + couponId));
-            finalPrice = applyCouponDiscount(totalItemPrice, coupon);
+            discountAmount = applyCouponDiscount(totalItemPrice, coupon);
         }
 
+        BigDecimal finalPrice = totalItemPrice.subtract(discountAmount)
+                .max(BigDecimal.ZERO)
+                .setScale(0, RoundingMode.DOWN);
         order.setTotalAmount(finalPrice);
         orderRepository.save(order);
     }
@@ -480,13 +495,49 @@ public class OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    private BigDecimal calculateTotalItemPrice(Order order, List<CartItem> cartItems, Map<Long, RentalItem> rentalItemMap) {
+        if (cartItems == null || cartItems.isEmpty()) return BigDecimal.ZERO;
+
+        long rentalDays = calculateRentalDays(order);
+
+        BigDecimal totalItemPrice = cartItems.stream()
+                .map(cartItem -> {
+                    RentalItem rentalItem = rentalItemMap.get(cartItem.getRentalItemId());
+                    BigDecimal price = rentalItem != null ? rentalItem.getPrice() : BigDecimal.ZERO;
+                    int quantity = cartItem.getQuantity() != null ? cartItem.getQuantity() : 0;
+                    return price.multiply(BigDecimal.valueOf(quantity));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .multiply(BigDecimal.valueOf(rentalDays))
+                .setScale(0, RoundingMode.DOWN);
+
+        return totalItemPrice;
+    }
+
+
     private BigDecimal calculateDiscountAmount(BigDecimal totalItemPrice, BigDecimal finalPrice) {
         BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
         return discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
     }
 
     private long calculateRentalDays(Order order) {
-        return ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate()) + 1;
+        LocalDate rentalDate = order.getRentalDate().toLocalDate();
+        LocalDate returnDate = order.getReturnDate().toLocalDate();
+
+        // 오늘 날짜 가져오기
+        LocalDate today = LocalDate.now();
+
+        // 날짜 차이 계산 (반납일 포함)
+        if (!rentalDate.isAfter(returnDate)) {
+            long daysBetween = ChronoUnit.DAYS.between(rentalDate, returnDate) + 1;
+            // rentalDate가 오늘과 같다면 1 추가
+            if (rentalDate.equals(today)) {
+                daysBetween += 1;
+            }
+            return daysBetween;
+        } else {
+            throw new IllegalArgumentException("반납일은 대여일보다 이후여야 합니다.");
+        }
     }
 
     private String formatCreatedAt(LocalDateTime createdAt) {
