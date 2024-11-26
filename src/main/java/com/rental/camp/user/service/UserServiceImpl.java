@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -91,8 +92,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUuid(uuid);
         if (user != null) {
             String imageUrl = user.getImageUrl();
-            if (userModifyRequest.getImageFile() != null)
-                imageUrl = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
+            if (userModifyRequest.getImageFile() != null) {
+                CompletableFuture<String> image = s3Client.uploadImage("profile/" + uuid + "/", userModifyRequest.getImageFile());
+                imageUrl = String.valueOf(image.join());
+            }
 
             user.setPhone(userModifyRequest.getPhone());
             user.setAddress(userModifyRequest.getAddress());

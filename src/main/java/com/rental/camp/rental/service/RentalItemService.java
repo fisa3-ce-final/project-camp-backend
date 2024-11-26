@@ -15,13 +15,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
@@ -63,7 +66,7 @@ public class RentalItemService {
         return rentalItemRepository.findItemDetailById(id);
     }
 
-    public void createRentalItem(String uuid, RentalItemCreateRequest request) {
+    public void createRentalItem(String uuid, RentalItemCreateRequest request) throws IOException {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
 
         RentalItem rentalItem = RentalItem.builder()
@@ -79,26 +82,27 @@ public class RentalItemService {
 
         rentalItemRepository.save(rentalItem);
 
+        List<CompletableFuture<String>> images =  new ArrayList<>();
+
+        for (MultipartFile file : request.getImages()) {
+            images.add(s3Client.uploadImage("rental-item/" + uuid + "/", file));
+        }
+
+        List<String> urls = new ArrayList<>();
+
+        images.forEach(image -> urls.add(image.join()));
+
         AtomicInteger order = new AtomicInteger(0);
 
-        List<RentalItemImage> images = request.getImages().stream()
-                        .map(imgDto -> {
-                            String imageUrl = null;
-                            try {
-                                imageUrl = s3Client.uploadImage("rental-item/" + uuid + "/", imgDto);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+        List<RentalItemImage> rentalItemImages = urls.stream()
+                .map(imageUrl -> RentalItemImage.builder()
+                        .imageUrl(imageUrl)
+                        .imageOrder(order.getAndIncrement())
+                        .rentalItemId(rentalItem.getId())
+                        .build())
+                .toList();
 
-                            return RentalItemImage.builder()
-                                    .imageUrl(imageUrl)
-                                    .imageOrder(order.getAndIncrement())
-                                    .rentalItemId(rentalItem.getId())
-                                    .build();
-                        })
-                        .toList();
-
-        rentalItemImageRepository.saveAll(images);
+        rentalItemImageRepository.saveAll(rentalItemImages);
     }
 
     public Page<RentalItemResponse> searchRentalItems(String keyword, RentalItemRequest requestDto) {
