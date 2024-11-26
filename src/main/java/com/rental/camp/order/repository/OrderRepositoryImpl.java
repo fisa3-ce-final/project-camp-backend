@@ -116,6 +116,24 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     }
 
     @Override
+    public List<CartItem> findOverStockCartItemsByOrderId(Long orderId, Long userId) {
+        QCartItem qCartItem = QCartItem.cartItem;
+        QRentalItem qRentalItem = QRentalItem.rentalItem;
+        QOrderItem qOrderItem = QOrderItem.orderItem;
+
+        return queryFactory
+                .selectFrom(qCartItem)
+                .join(qRentalItem).on(qCartItem.rentalItemId.eq(qRentalItem.id))
+                .join(qOrderItem).on(qOrderItem.rentalItemId.eq(qRentalItem.id)
+                        .and(qOrderItem.orderId.eq(orderId)))
+                .where(
+                        qCartItem.userId.eq(userId),
+                        qCartItem.quantity.gt(qRentalItem.stock)
+                )
+                .fetch();
+    }
+
+    @Override
     public Order findOrderByCartItems(List<Long> cartItemIds, Long userId) {
         QCartItem qCartItem = QCartItem.cartItem;
         QOrderItem qOrderItem = QOrderItem.orderItem;
