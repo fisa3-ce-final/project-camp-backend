@@ -1,7 +1,6 @@
 package com.rental.camp.admin.service;
 
 import com.rental.camp.admin.dto.*;
-import com.rental.camp.order.repository.OrderRepository;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.type.RentalItemStatus;
 import com.rental.camp.rental.model.type.RentalStatus;
@@ -20,7 +19,6 @@ import java.util.stream.IntStream;
 @Service
 public class AdminService {
     private final RentalItemRepository rentalItemRepository;
-    private final OrderRepository orderRepository;
 
     public Page<AuditResponse> getAuditList(AuditRequest request) {
         Page<RentalItem> rentalItems = rentalItemRepository.findItemsByStatus(request.getStatus(), PageRequest.of(request.getPage(), request.getSize()));;
@@ -42,7 +40,10 @@ public class AdminService {
     @Transactional
     public RentalItemStatus reviewAudit(Long id, UpdateStatusRequest request) {
         rentalItemRepository.findById(id).ifPresent(item -> {
-            item.setStatus(request.getStatus());
+            if (request.getStatus() == RentalItemStatus.APPROVED)
+                item.setStatus(RentalItemStatus.AVAILABLE);
+            else if (request.getStatus() == RentalItemStatus.REJECTED)
+                item.setStatus(RentalItemStatus.REJECTED);
         });
 
         return rentalItemRepository.findById(id).get().getStatus();
