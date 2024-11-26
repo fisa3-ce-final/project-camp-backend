@@ -241,6 +241,7 @@ public class OrderService {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         Order existingOrder = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        findOverStockCartItemsByOrderId(userId, existingOrder.getId());
         orderRepository.updateOrderStatus(existingOrder.getId(), OrderStatus.COMPLETED);
         if (existingOrder.getCouponId() != null) {
             updateUserCouponStatus(existingOrder);
