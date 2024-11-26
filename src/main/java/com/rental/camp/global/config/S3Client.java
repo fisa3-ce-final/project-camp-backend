@@ -11,11 +11,13 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.util.IOUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @Component
@@ -26,18 +28,20 @@ public class S3Client {
     private String bucket;
 
     // 이미지 S3에 업로드 후 이미지 URL 반환
-    public String uploadImage(String path, MultipartFile file) throws IOException {
+    @Async("imageUploadExecutor")
+    public CompletableFuture<String> uploadImage(String path, MultipartFile file) throws IOException {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(file.getContentType());
         metadata.setContentLength(file.getSize());
-        
+
         String fullPath = path + file.getOriginalFilename();
 
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, fullPath, file.getInputStream(), metadata);
         putObjectRequest.withCannedAcl(CannedAccessControlList.PublicRead);
         amazonS3.putObject(putObjectRequest);
 
-        return amazonS3.getUrl(bucket, fullPath).toString();
+        String fileUrl = amazonS3.getUrl(bucket, fullPath).toString();
+        return CompletableFuture.completedFuture(fileUrl);
     }
 
     //이미지 다운로드

@@ -1,6 +1,7 @@
 package com.rental.camp.rental.service;
 
 import com.rental.camp.global.config.S3Client;
+import com.rental.camp.order.repository.OrderItemRepository;
 import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
@@ -13,12 +14,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
@@ -26,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RentalItemService {
     private final RentalItemRepository rentalItemRepository;
     private final RentalItemImageRepository rentalItemImageRepository;
+    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final S3Client s3Client;
 
@@ -59,7 +66,7 @@ public class RentalItemService {
         return rentalItemRepository.findItemDetailById(id);
     }
 
-    public void createRentalItem(String uuid, RentalItemCreateRequest request) {
+    public void createRentalItem(String uuid, RentalItemCreateRequest request) throws IOException {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
 
         RentalItem rentalItem = RentalItem.builder()
@@ -75,26 +82,27 @@ public class RentalItemService {
 
         rentalItemRepository.save(rentalItem);
 
+        List<CompletableFuture<String>> images =  new ArrayList<>();
+
+        for (MultipartFile file : request.getImages()) {
+            images.add(s3Client.uploadImage("rental-item/" + uuid + "/", file));
+        }
+
+        List<String> urls = new ArrayList<>();
+
+        images.forEach(image -> urls.add(image.join()));
+
         AtomicInteger order = new AtomicInteger(0);
 
-        List<RentalItemImage> images = request.getImages().stream()
-                        .map(imgDto -> {
-                            String imageUrl = null;
-                            try {
-                                imageUrl = s3Client.uploadImage("rental-item/" + uuid + "/", imgDto);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+        List<RentalItemImage> rentalItemImages = urls.stream()
+                .map(imageUrl -> RentalItemImage.builder()
+                        .imageUrl(imageUrl)
+                        .imageOrder(order.getAndIncrement())
+                        .rentalItemId(rentalItem.getId())
+                        .build())
+                .toList();
 
-                            return RentalItemImage.builder()
-                                    .imageUrl(imageUrl)
-                                    .imageOrder(order.getAndIncrement())
-                                    .rentalItemId(rentalItem.getId())
-                                    .build();
-                        })
-                        .toList();
-
-        rentalItemImageRepository.saveAll(images);
+        rentalItemImageRepository.saveAll(rentalItemImages);
     }
 
     public Page<RentalItemResponse> searchRentalItems(String keyword, RentalItemRequest requestDto) {
@@ -139,5 +147,17 @@ public class RentalItemService {
     public Page<MyOrdersResponse> getMyOrders(String uuid, MyPageRequest pageRequest) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         return rentalItemRepository.findOrdersByUserId(userId, PageRequest.of(pageRequest.getPage(), pageRequest.getSize()));
+    }
+
+    // 별점 후기 남기기
+    @Transactional
+    public BigDecimal reviewUtilization(Long rentalItemId, String uuid, BigDecimal ratingAvg) {
+        int reviewCount = orderItemRepository.countByRentalItemId(rentalItemId);
+
+        BigDecimal newRatingAvg = ratingAvg.multiply(new BigDecimal(reviewCount)).add(ratingAvg).divide(new BigDecimal(reviewCount + 1), 2, RoundingMode.HALF_UP);
+
+        rentalItemRepository.findById(rentalItemId).get().setRatingAvg(newRatingAvg);
+
+        return newRatingAvg;
     }
 }

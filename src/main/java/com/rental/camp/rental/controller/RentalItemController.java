@@ -15,13 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @RequiredArgsConstructor
 @RequestMapping("/rental-items")
@@ -84,5 +80,14 @@ public class RentalItemController {
     public Page<MyOrdersResponse> getMyOrders(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
         return rentalItemService.getMyOrders(uuid, pageRequest);
+    }
+
+    @PutMapping("/review/{id}")
+    public String reviewUtilization(@PathVariable(name = "id") Long id,
+                                    @RequestParam(name = "ratingAvg") BigDecimal ratingAvg,
+                                    JwtAuthenticationToken principal) {
+        String uuid = principal.getName();
+        BigDecimal newRatingAvg = rentalItemService.reviewUtilization(id, uuid, ratingAvg);
+        return "후기 별점 업데이트 : " + newRatingAvg.toString();
     }
 }
