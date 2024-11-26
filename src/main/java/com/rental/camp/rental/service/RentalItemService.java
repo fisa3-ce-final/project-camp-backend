@@ -1,6 +1,7 @@
 package com.rental.camp.rental.service;
 
 import com.rental.camp.global.config.S3Client;
+import com.rental.camp.order.repository.OrderItemRepository;
 import com.rental.camp.rental.dto.*;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
@@ -13,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RentalItemService {
     private final RentalItemRepository rentalItemRepository;
     private final RentalItemImageRepository rentalItemImageRepository;
+    private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final S3Client s3Client;
 
@@ -139,5 +143,17 @@ public class RentalItemService {
     public Page<MyOrdersResponse> getMyOrders(String uuid, MyPageRequest pageRequest) {
         Long userId = userRepository.findByUuid(UUID.fromString(uuid)).getId();
         return rentalItemRepository.findOrdersByUserId(userId, PageRequest.of(pageRequest.getPage(), pageRequest.getSize()));
+    }
+
+    // 별점 후기 남기기
+    @Transactional
+    public BigDecimal reviewUtilization(Long rentalItemId, String uuid, BigDecimal ratingAvg) {
+        int reviewCount = orderItemRepository.countByRentalItemId(rentalItemId);
+
+        BigDecimal newRatingAvg = ratingAvg.multiply(new BigDecimal(reviewCount)).add(ratingAvg).divide(new BigDecimal(reviewCount + 1), 2, RoundingMode.HALF_UP);
+
+        rentalItemRepository.findById(rentalItemId).get().setRatingAvg(newRatingAvg);
+
+        return newRatingAvg;
     }
 }
