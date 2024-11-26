@@ -530,10 +530,6 @@ public class OrderService {
         // 날짜 차이 계산 (반납일 포함)
         if (!rentalDate.isAfter(returnDate)) {
             long daysBetween = ChronoUnit.DAYS.between(rentalDate, returnDate) + 1;
-            // rentalDate가 오늘과 같다면 1 추가
-            if (rentalDate.equals(today)) {
-                daysBetween += 1;
-            }
             return daysBetween;
         } else {
             throw new IllegalArgumentException("반납일은 대여일보다 이후여야 합니다.");
