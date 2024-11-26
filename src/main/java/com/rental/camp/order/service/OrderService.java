@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -161,10 +162,7 @@ public class OrderService {
         BigDecimal finalPrice = order.getTotalAmount().setScale(0, RoundingMode.DOWN);
 
 
-        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice);
-
-
-        discountAmount = discountAmount.setScale(0, RoundingMode.DOWN);
+        BigDecimal discountAmount = totalItemPrice.subtract(finalPrice).setScale(0, RoundingMode.DOWN);
 
 
         BigDecimal finalDiscountAmount = discountAmount.compareTo(BigDecimal.ZERO) > 0 ? discountAmount : null;
@@ -486,7 +484,26 @@ public class OrderService {
     }
 
     private long calculateRentalDays(Order order) {
-        return ChronoUnit.DAYS.between(order.getRentalDate().toLocalDate(), order.getReturnDate().toLocalDate()) + 1;
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++" + order.getRentalDate().toLocalDate());
+        System.out.println("-------------------------------------------------------" + order.getReturnDate().toLocalDate());
+
+        LocalDate rentalDate = order.getRentalDate().toLocalDate();
+        LocalDate returnDate = order.getReturnDate().toLocalDate();
+
+        // 오늘 날짜 가져오기
+        LocalDate today = LocalDate.now();
+
+        // 날짜 차이 계산 (반납일 포함)
+        if (!rentalDate.isAfter(returnDate)) {
+            long daysBetween = ChronoUnit.DAYS.between(rentalDate, returnDate) + 1;
+            // rentalDate가 오늘과 같다면 1 추가
+            if (rentalDate.equals(today)) {
+                daysBetween += 1;
+            }
+            return daysBetween;
+        } else {
+            throw new IllegalArgumentException("반납일은 대여일보다 이후여야 합니다.");
+        }
     }
 
     private String formatCreatedAt(LocalDateTime createdAt) {
