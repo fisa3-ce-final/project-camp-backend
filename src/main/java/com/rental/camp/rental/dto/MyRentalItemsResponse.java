@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Data
 public class MyRentalItemsResponse {
+    private Long rentalItemId;
     private String rentalItem;
     private RentalItemCategory category;
     private Integer quantity;

@@ -157,6 +157,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
 
         List<MyRentalItemsResponse> myRentalItems = jpaQueryFactory.select(Projections.constructor(
                         MyRentalItemsResponse.class,
+                        rentalItem.id,
                         rentalItem.name,
                         rentalItem.category,
                         orderItem.quantity,
