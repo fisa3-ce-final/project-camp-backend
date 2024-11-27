@@ -13,6 +13,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -59,7 +60,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://recoild-toy.xyz")); // 허용 도메인
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 허용 메서드
-        configuration.setAllowedHeaders(Arrays.asList("*")); // 모든 헤더 허용
+        configuration.setAllowedHeaders(List.of("*")); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 인증 정보 포함 허용
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
