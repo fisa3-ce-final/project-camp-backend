@@ -36,10 +36,10 @@
 
 <h3 style="color: #333;">데이터베이스 스키마</h3>
 <p>이 스키마에는 사용자 관리, 아이템 대여, 주문 처리 및 커뮤니티 상호작용과 같은 다양한 플랫폼 기능을 지원하는 <code>users</code>, <code>rental_item</code>, <code>orders</code>, <code>community_post</code> 등의 테이블이 포함되어 있습니다.</p>
+<img src="src/main/resources/Camping_DB.png">
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">🌐 API 문서</h2>
 <p>API 문서는 <strong>Springdoc OpenAPI</strong>를 사용해 생성되며 애플리케이션 실행 후 <code>/swagger-ui.html</code>에서 확인할 수 있습니다.</p>
-<img src="src/main/resources/Camping_DB.png">
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">🧪 테스트</h2>
 <ul>
