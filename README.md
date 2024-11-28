@@ -47,7 +47,7 @@
 </ul>
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">🔐 보안 (선택 사항)</h2>
-<p>보안 종속성은 미리 구성되어 있으나, 현재는 주석 처리되어 있습니다. <code>build.gradle</code> 파일에서 주석을 해제하여 추가적인 보안 계층을 활성화할 수 있습니다.</p>
+<p>보안 종속성은 미리 구성되어 있으나 현재는 주석 처리되어 있습니다. <code>build.gradle</code> 파일에서 주석을 해제하여 추가적인 보안 계층을 활성화할 수 있습니다.</p>
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">📝 추가 정보</h2>
 <ul>
