@@ -1,5 +1,6 @@
 package com.rental.camp.admin.dto;
 
+import com.rental.camp.order.model.type.OrderStatus;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.model.type.RentalStatus;
 import lombok.AllArgsConstructor;
@@ -13,11 +14,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Data
 public class RentalStatusResponse {
-    private Long rentalId;
+    private Long orderId;
     private Long userId;
     private String userName;
-    private String rentalItemName;
-    private RentalItemCategory rentalItemCategory;
+    private OrderStatus orderStatus;
     private LocalDateTime rentalDate;
     private LocalDateTime returnDate;
     private RentalStatus status;

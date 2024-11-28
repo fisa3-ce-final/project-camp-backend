@@ -300,39 +300,30 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
     }
 
     @Override
-    public Page<RentalStatusResponse> findItemsByRentalStatus(RentalStatus status, Pageable pageable) {
-        QRentalItem rentalItem = QRentalItem.rentalItem;
+    public Page<RentalStatusResponse> findAllOrders(Pageable pageable) {
         QOrder order = QOrder.order;
-        QOrderItem orderItem = QOrderItem.orderItem;
         QUser user = QUser.user;
-
-        BooleanExpression statusCondition = status.equals(RentalStatus.ALL) ? null : order.rentalStatus.eq(status);
 
         List<RentalStatusResponse> rentalItemList = jpaQueryFactory.select(Projections.constructor(
                     RentalStatusResponse.class,
-                    rentalItem.id,
+                    order.id,
                     order.userId,
                     user.username,
-                    rentalItem.name,
-                    rentalItem.category,
+                    order.orderStatus,
                     order.rentalDate,
                     order.returnDate,
                     order.rentalStatus,
                     order.totalAmount
                 ))
                 .from(order)
-                .join(orderItem).on(order.id.eq(orderItem.orderId))
-                .join(rentalItem).on(orderItem.rentalItemId.eq(rentalItem.id))
                 .join(user).on(order.userId.eq(user.id))
-                .where(statusCondition)
-                .orderBy(order.returnDate.desc())
+                .orderBy(order.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
         long total = Optional.ofNullable(jpaQueryFactory.select(order.count())
                 .from(order)
-                .where(statusCondition)
                 .fetchOne()).orElse(0L);
 
         return new PageImpl<>(rentalItemList, pageable, total);

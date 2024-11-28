@@ -23,5 +23,5 @@ public interface RentalItemRepositoryCustom {
     Integer countByRentalItemStatus(RentalItemStatus status);
     Integer countByRentalStatus(RentalStatus status);
     Integer countByMonth(int month);
-    Page<RentalStatusResponse> findItemsByRentalStatus(RentalStatus status, Pageable pageable);
+    Page<RentalStatusResponse> findAllOrders(Pageable pageable);
 }
