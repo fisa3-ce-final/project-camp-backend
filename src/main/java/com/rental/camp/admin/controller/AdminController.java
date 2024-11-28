@@ -45,6 +45,6 @@ public class AdminController {
     @PutMapping("/rental-items/{id}")
     public String reviewAudit(@PathVariable(name = "id") Long id, @ModelAttribute UpdateStatusRequest request) {
         RentalItemStatus result = adminService.reviewAudit(id, request);
-        return request.getStatus().toString() + " -> " + result.toString();
+        return "샹태 변경 : " + result.toString();
     }
 }
