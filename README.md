@@ -39,6 +39,7 @@
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">🌐 API 문서</h2>
 <p>API 문서는 <strong>Springdoc OpenAPI</strong>를 사용해 생성되며 애플리케이션 실행 후 <code>/swagger-ui.html</code>에서 확인할 수 있습니다.</p>
+<img src="src/main/resources/Camping_DB.png">
 
 <h2 style="color: #0056b3; border-bottom: 2px solid #ddd; padding-bottom: 5px;">🧪 테스트</h2>
 <ul>
