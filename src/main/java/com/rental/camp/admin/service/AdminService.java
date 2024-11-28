@@ -66,8 +66,8 @@ public class AdminService {
                 .build();
     }
 
-    public Page<RentalStatusResponse> getRentalList(RentalStatus rentalStatus, int page, int size) {
-        return rentalItemRepository.findItemsByRentalStatus(rentalStatus, PageRequest.of(page, size));
+    public Page<RentalStatusResponse> getRentalList(int page, int size) {
+        return rentalItemRepository.findAllOrders(PageRequest.of(page, size));
     }
 
     public RentalStatus changeStatus(String id, RentalStatus status) {

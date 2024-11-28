@@ -23,10 +23,9 @@ public class AdminController {
     }
 
     // 관리자 대여 이용 현황 목록 조회
-    @GetMapping("/rentals/{status}")
-    public Page<RentalStatusResponse> getRentalList(@PathVariable(name = "status") String status,
-                                                    @RequestParam(name = "page") int page, @RequestParam(name = "size") int size) {
-        return adminService.getRentalList(RentalStatus.valueOf(status.toUpperCase()), page, size);
+    @GetMapping("/rentals")
+    public Page<RentalStatusResponse> getRentalList(@RequestParam(name = "page") int page, @RequestParam(name = "size") int size) {
+        return adminService.getRentalList(page, size);
     }
 
     // 관리자 대여 이용 상태 수정
