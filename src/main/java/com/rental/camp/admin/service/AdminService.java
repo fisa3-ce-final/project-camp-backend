@@ -40,7 +40,7 @@ public class AdminService {
     @Transactional
     public RentalItemStatus reviewAudit(Long id, UpdateStatusRequest request) {
         rentalItemRepository.findById(id).ifPresent(item -> {
-            if (request.getStatus() == RentalItemStatus.APPROVED)
+            if (request.getStatus() == RentalItemStatus.AVAILABLE)
                 item.setStatus(RentalItemStatus.AVAILABLE);
             else if (request.getStatus() == RentalItemStatus.REJECTED)
                 item.setStatus(RentalItemStatus.REJECTED);
