@@ -30,7 +30,7 @@ public class AdminController {
 
     // 관리자 대여 이용 상태 수정
     @PutMapping("/rentals/{id}")
-    public String changeStatus(@PathVariable(name = "id") Long id, @RequestParam RentalStatus status) {
+    public String changeStatus(@PathVariable(name = "id") Long id, @RequestParam(name = "status") RentalStatus status) {
         RentalStatus result = adminService.changeStatus(id, status);
         return "대여 현황 변경 : " + result.toString();
     }
