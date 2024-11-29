@@ -1,22 +1,54 @@
-services:
-    postgres:
-        image: 'postgres:16.4'
-        environment:
-            - 'POSTGRES_DB=test'
-            - 'POSTGRES_PASSWORD=test'
-            - 'POSTGRES_USER=test'
-        ports:
-            - '5433:5432'
-        volumes:
-            - postgres-data:/var/lib/postgresql/data
+networks:
+  monitor-net:
+    driver: bridge
 
-    redis:
-        image: 'redis:7.4.1'
-        ports:
-            - "6379:6379"
-        volumes:
-            - redis_data:/data  # 데이터 지속성을 위한 볼륨
+services:
+  redis:
+    image: 'redis:7.4.1'
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus-data:/prometheus
+      - ./output:/output
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:9090/-/healthy" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - ecs-discovery
+    networks:
+      - monitor-net
+
+    # Grafana 대시보드 서비스
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3100:3100"  # Grafana 포트를 3100으로 설정
+    environment:
+      - GF_SERVER_HTTP_PORT=3100  # Grafana 내부 HTTP 포트도 3100으로 설정
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    networks:
+      - monitor-net
 
 volumes:
-    postgres-data:
-    redis_data:
+  redis_data:
+  prometheus-data:
+  grafana-data:

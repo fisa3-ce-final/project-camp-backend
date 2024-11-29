@@ -3,6 +3,8 @@ generated/
 .gradle
 build/
 uploads/
+grafana-data/
+prometheus-data/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
