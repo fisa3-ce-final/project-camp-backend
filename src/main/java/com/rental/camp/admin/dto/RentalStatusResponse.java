@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class RentalStatusResponse {
     private Long orderId;
     private Long userId;
-    private String userName;
+    private String nickname;
     private OrderStatus orderStatus;
     private LocalDateTime rentalDate;
     private LocalDateTime returnDate;

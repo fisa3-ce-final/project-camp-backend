@@ -308,7 +308,7 @@ public class RentalItemRepositoryImpl implements RentalItemRepositoryCustom {
                     RentalStatusResponse.class,
                     order.id,
                     order.userId,
-                    user.username,
+                    user.nickname,
                     order.orderStatus,
                     order.rentalDate,
                     order.returnDate,
