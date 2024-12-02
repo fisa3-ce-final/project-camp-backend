@@ -12,7 +12,7 @@ spring:
           issuer-uri: ${AWS_COGNITO_ISSUER_URI}
 
   redis:
-    host: localhost
+    host: ${REDIS_HOST}
     port: 6379
   #        password: yourpassword  # Redis에 비밀번호가 설정되어 있다면 입력
 
