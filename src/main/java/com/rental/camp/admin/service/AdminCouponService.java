@@ -5,6 +5,7 @@ import com.rental.camp.coupon.dto.PublishCouponRequest;
 import com.rental.camp.coupon.model.Coupon;
 import com.rental.camp.coupon.model.type.CouponType;
 import com.rental.camp.coupon.repository.CouponRepository;
+import com.rental.camp.coupon.service.CouponService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AdminCouponService {
     private final CouponRepository couponRepository;
+    private final CouponService couponService;
     @PersistenceContext
     private final EntityManager entityManager;
 
@@ -36,6 +38,7 @@ public class AdminCouponService {
 
         entityManager.flush();
         entityManager.refresh(savedCoupon);
+        couponService.initializeCouponInRedis(coupon);
         return AdminCouponResponse.builder()
                 .couponId(savedCoupon.getId())
                 .name(savedCoupon.getName())
