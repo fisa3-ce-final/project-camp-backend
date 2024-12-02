@@ -33,7 +33,7 @@ public class CouponController {
         try {
             String uuid = principal.getName();
             UserCoupon userCoupon = couponService.issueUserCoupon(uuid, request.getCouponId());
-            return ResponseEntity.ok(userCoupon);
+            return ResponseEntity.ok("쿠폰 발급 완료");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
