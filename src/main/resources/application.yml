@@ -80,3 +80,5 @@ cloud:
 logging:
   level:
     org.springframework.security: DEBUG
+    org.springframework.data.redis: DEBUG
+
