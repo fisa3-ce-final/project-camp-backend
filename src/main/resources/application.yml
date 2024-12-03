@@ -12,8 +12,9 @@ spring:
           issuer-uri: ${AWS_COGNITO_ISSUER_URI}
 
   redis:
-    host: redis-ecache.gsgrtt.ng.0001.apn2.cache.amazonaws.com
+    host: ${REDIS_HOST}
     port: 6379
+    password: ${REDIS_PW}
 
   datasource:
     url: ${JDBC_URL:jdbc:postgresql://localhost:5433/test}
