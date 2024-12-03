@@ -12,7 +12,7 @@ spring:
           issuer-uri: ${AWS_COGNITO_ISSUER_URI}
 
   redis:
-    host: ${REDIS_HOST}
+    host: redis-ecache.gsgrtt.ng.0001.apn2.cache.amazonaws.com
     port: 6379
 
   datasource:
