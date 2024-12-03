@@ -64,6 +64,11 @@ public class RentalItemController {
         return rentalItemService.searchRentalItems(keyword, requestDto);
     }
 
+    @PostMapping("/{id}/views")
+    public ResponseEntity<String> addViewNum(@PathVariable(name = "id") Long id) {
+        return ResponseEntity.ok("조회수 올리기 성공");
+    }
+
     @GetMapping("/my-rental-items")
     public Page<MyRentalItemsResponse> getMyRentalItems(@ModelAttribute MyPageRequest pageRequest, JwtAuthenticationToken principal) {
         String uuid = principal.getName();
