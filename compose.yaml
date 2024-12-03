@@ -17,14 +17,14 @@ services:
     #    volumes:
     #      - redis_data:/data  # 데이터 지속성을 위한 볼륨
 
-    redis:
-        image: 'redis:7.4.1'
-        ports:
-            - "6379:6379"
-        volumes:
-            - ./redis.conf:/usr/local/etc/redis/redis.conf  # 로컬의 redis.conf 파일을 컨테이너에 마운트
-        command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]  #
+    # redis:
+    #     image: 'redis:7.4.1'
+    #     ports:
+    #         - "6379:6379"
+    #     volumes:
+    #         - ./redis.conf:/usr/local/etc/redis/redis.conf  # 로컬의 redis.conf 파일을 컨테이너에 마운트
+    #     command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]  #
 
 volumes:
     postgres-data:
-    redis_data:
+    # redis_data:
