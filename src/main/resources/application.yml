@@ -14,7 +14,8 @@ spring:
   redis:
     host: ${REDIS_HOST}
     port: 6379
-    password: ${REDIS_PW}
+    ssl: true
+  
 
   datasource:
     url: ${JDBC_URL:jdbc:postgresql://localhost:5433/test}
@@ -57,6 +58,13 @@ management:
       exposure:
         include: "*"
   metrics:
+    distribution:
+      tags:
+        include: status, uri
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
     tags:
       application: ${spring.application.name}
     export:
