@@ -3,9 +3,11 @@ package com.rental.camp.rental.service;
 import com.rental.camp.global.config.S3Client;
 import com.rental.camp.order.repository.OrderItemRepository;
 import com.rental.camp.rental.dto.*;
+import com.rental.camp.rental.model.IpTracking;
 import com.rental.camp.rental.model.RentalItem;
 import com.rental.camp.rental.model.RentalItemImage;
 import com.rental.camp.rental.model.type.RentalItemCategory;
+import com.rental.camp.rental.repository.IpTrackingRepository;
 import com.rental.camp.rental.repository.RentalItemImageRepository;
 import com.rental.camp.rental.repository.RentalItemRepository;
 import com.rental.camp.user.model.User;
@@ -34,6 +36,7 @@ public class RentalItemService {
     private final RentalItemImageRepository rentalItemImageRepository;
     private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
+    private final IpTrackingRepository ipTrackingRepository;
     private final S3Client s3Client;
 
     public Page<RentalItemResponse> getRentalItems(RentalItemCategory category, RentalItemRequest requestDto) {
@@ -129,6 +132,21 @@ public class RentalItemService {
 
             return responseDto;
         });
+    }
+
+    @Transactional
+    public String addViewNum(Long id, String clientIp) {
+        rentalItemRepository.findById(id).ifPresent(rentalItem -> {
+            if (!ipTrackingRepository.existsByIp(clientIp)) {
+                rentalItem.setViewCount(rentalItem.getViewCount() + 1);
+                ipTrackingRepository.save(IpTracking.builder()
+                                .ip(clientIp)
+                                .rentalItemId(id)
+                        .build());
+            }
+        });
+
+        return "조회수 증가 성공";
     }
 
     // 마이페이지에서 내 대여 기록 조회

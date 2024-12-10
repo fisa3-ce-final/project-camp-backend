@@ -10,6 +10,7 @@ import com.rental.camp.rental.dto.RentalItemRequest;
 import com.rental.camp.rental.dto.RentalItemResponse;
 import com.rental.camp.rental.model.type.RentalItemCategory;
 import com.rental.camp.rental.service.RentalItemService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -65,8 +66,18 @@ public class RentalItemController {
     }
 
     @PostMapping("/{id}/views")
-    public ResponseEntity<String> addViewNum(@PathVariable(name = "id") Long id) {
-        return ResponseEntity.ok("조회수 올리기 성공");
+    public ResponseEntity<String> addViewNum(@PathVariable(name = "id") Long id, HttpServletRequest request) {
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getHeader("Proxy-Client-IP");
+        }
+        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getRemoteAddr();
+        }
+        return ResponseEntity.ok(rentalItemService.addViewNum(id, clientIp));
     }
 
     @GetMapping("/my-rental-items")
