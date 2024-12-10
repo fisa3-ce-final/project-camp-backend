@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -88,7 +89,9 @@ public class OrderService {
 
         User user = orderRepository.findUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User를 찾을 수 없습니다: " + userId));
-
+        if (!StringUtils.hasText(user.getAddress()) || !StringUtils.hasText(user.getPhone())) {
+            throw new RuntimeException("전화번호, 주소를 마이페이지에서 입력 후 시도해주세요");
+        }
         List<OrderItemInfo> orderItems = orderRepository.findOrderItemsWithDetails(order.getId());
 
         return createOrderResponse(order, user, orderItems, totalItemPrice, rentalDays);

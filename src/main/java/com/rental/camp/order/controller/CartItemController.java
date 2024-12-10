@@ -72,4 +72,10 @@ public class CartItemController {
         
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntime (RuntimeException e) {
+
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 }
